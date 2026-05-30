@@ -1,0 +1,6 @@
+id,customer_id,workload_type,gpu_type,gpu_count,expected_duration_minutes,deadline_minutes_from_now,current_region,allowed_regions,priority,latency_sensitive,max_latency_ms,can_delay,can_move,checkpointable,data_residency_region,estimated_revenue_usd
+resident-bank-001,bankco,training,h100,4,180,600,eu-west-1,eu-west-1,high,false,,true,true,true,eu-west-1,600
+low-latency-ads-009,adco,inference,l40,4,30,75,us-east-1,us-east-1|us-west-2|us-central-1,critical,true,30,false,true,true,,450
+carbon-batch-041,media,batch,a100,6,150,540,us-east-1,us-east-1|us-west-2|us-central-1,normal,false,,true,true,true,,160
+pinned-etl-019,retail,batch,a10,2,90,360,us-east-1,us-east-1|us-central-1,low,false,,true,false,true,,50
+risk-review-088,research,training,h100,8,240,720,us-east-1,us-east-1|us-west-2|us-central-1,critical,false,,true,true,true,,700

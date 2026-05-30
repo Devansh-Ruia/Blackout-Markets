@@ -23,7 +23,7 @@ function round(value: number, places = 4) {
 
 export function estimateCost(workload: Workload, region: Region, assumptions: Assumptions): CostEstimate {
   const hours = workload.expected_duration_minutes / 60;
-  const pue = region.pue ?? 1.2;
+  const pue = region.pue ?? assumptions.default_pue ?? 1.2;
   const estimated_kwh = workload.gpu_count * hours * assumptions.gpu_kwh_assumption * pue;
   return {
     estimated_kwh: round(estimated_kwh),

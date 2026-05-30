@@ -1,0 +1,8 @@
+{
+  "max_delay_minutes": 90,
+  "allowed_regions": ["us-east-1", "us-west-2", "us-central-1", "eu-west-1"],
+  "blocked_regions": ["us-west-2"],
+  "carbon_ceiling_g_per_kwh": 250,
+  "max_latency_ms": 60,
+  "require_manual_for_low_confidence": true
+}

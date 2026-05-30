@@ -1,0 +1,6 @@
+id,customer_id,workload_type,gpu_type,gpu_count,expected_duration_minutes,deadline_minutes_from_now,current_region,allowed_regions,priority,latency_sensitive,max_latency_ms,can_delay,can_move,checkpointable,data_residency_region,estimated_revenue_usd
+train-delta-100,delta,training,h100,8,240,720,us-east-1,us-east-1|us-west-2|us-central-1,normal,false,,true,true,true,,520
+train-delta-101,delta,training,h100,8,210,660,us-east-1,us-east-1|us-west-2|us-central-1,normal,false,,true,true,true,,490
+batch-epsilon-200,epsilon,batch,a100,8,120,420,us-east-1,us-east-1|us-west-2|us-central-1,low,false,,true,true,true,,140
+serve-zeta-301,zeta,inference,l40,4,45,90,us-east-1,us-east-1|us-central-1,critical,true,40,false,true,true,,310
+cleanup-eta-010,eta,batch,a10,2,60,360,us-east-1,us-east-1,low,false,,true,false,true,,30

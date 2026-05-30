@@ -1,0 +1,5 @@
+id,customer_id,workload_type,gpu_type,gpu_count,expected_duration_minutes,deadline_minutes_from_now,current_region,allowed_regions,priority,latency_sensitive,max_latency_ms,can_delay,can_move,checkpointable,data_residency_region,estimated_revenue_usd
+train-alpha-001,alpha,training,h100,8,180,540,us-east-1,us-east-1|us-west-2|us-central-1,normal,false,,true,true,true,,420
+serve-alpha-017,alpha,inference,l40,4,60,120,us-east-1,us-east-1|us-central-1,critical,true,35,true,true,true,,280
+batch-beta-044,beta,batch,a100,2,90,360,us-central-1,us-east-1|us-west-2|us-central-1,low,false,,true,true,true,,75
+finetune-gamma-021,gamma,training,h100,4,120,420,eu-west-1,eu-west-1,high,false,,true,true,true,eu-west-1,350

@@ -1,7 +1,14 @@
 import { useMemo, useState } from 'react';
-import { recommendationsToCsv } from '../domain/report';
-import type { OptimizationReport, Policy, Recommendation, RecommendationType } from '../domain/types';
+import { workloadReportRowsToCsv } from '../domain/report';
 import { defaultPolicy } from '../domain/policy';
+import type {
+  Confidence,
+  Policy,
+  RecommendationType,
+  RetrospectiveReport,
+  SavingsBreakdownRow,
+  WorkloadReportRow
+} from '../domain/types';
 
 type Step = 'upload' | 'policy' | 'results';
 
@@ -18,12 +25,14 @@ interface PolicyForm {
 const recTypes: Array<RecommendationType | 'all'> = [
   'all',
   'run_now',
-  'delay',
   'move_region',
+  'delay',
   'manual_review',
   'pinned',
   'invalid'
 ];
+
+const confidenceTypes: Array<Confidence | 'all'> = ['all', 'high', 'medium', 'low'];
 
 function toList(value: string) {
   return value
@@ -61,6 +70,14 @@ function number(value: number) {
   return value.toLocaleString(undefined, { maximumFractionDigits: 2 });
 }
 
+function percent(value: number) {
+  return `${number(value)}%`;
+}
+
+function unique(values: Array<string | null | undefined>) {
+  return Array.from(new Set(values.filter((value): value is string => Boolean(value)))).sort();
+}
+
 function FileBox({
   label,
   file,
@@ -85,7 +102,7 @@ function FileBox({
   );
 }
 
-function ValidationList({ report }: { report: OptimizationReport | null }) {
+function ValidationList({ report }: { report: RetrospectiveReport | null }) {
   if (!report?.validation_errors.length) return null;
 
   return (
@@ -107,61 +124,257 @@ function ValidationList({ report }: { report: OptimizationReport | null }) {
   );
 }
 
-function Summary({ report }: { report: OptimizationReport }) {
-  const items = [
-    ['total workloads', report.summary.total_workloads],
-    ['workloads movable', report.summary.workloads_movable],
-    ['workloads delayed', report.summary.workloads_delayed],
-    ['workloads pinned', report.summary.workloads_pinned],
-    ['estimated total savings', money(report.summary.estimated_total_savings_usd)],
-    ['estimated carbon delta', `${number(report.summary.estimated_carbon_delta_g)} g`]
-  ];
-
+function MetricCard({ label, value, note }: { label: string; value: string | number; note?: string }) {
   return (
-    <section className="summary-grid">
-      {items.map(([label, value]) => (
-        <div className="summary-card" key={label}>
-          <span>{label}</span>
-          <strong>{value}</strong>
-        </div>
-      ))}
+    <div className="summary-card">
+      <span>{label}</span>
+      <strong>{value}</strong>
+      {note ? <small>{note}</small> : null}
+    </div>
+  );
+}
+
+function ExecutiveSummary({ report }: { report: RetrospectiveReport }) {
+  return (
+    <section>
+      <div className="section-title">
+        <h2>Executive summary</h2>
+        <span>{report.summary.valid_workloads} valid workload{report.summary.valid_workloads === 1 ? '' : 's'}</span>
+      </div>
+      <div className="summary-grid">
+        <MetricCard label="total workloads" value={report.summary.total_workloads} />
+        <MetricCard label="Hard savings" value={money(report.summary.hard_savings_usd)} />
+        <MetricCard label="hard savings percent" value={percent(report.summary.hard_savings_percent)} />
+        <MetricCard label="carbon delta" value={`${number(report.summary.carbon_delta_g)} g`} />
+        <MetricCard label="movable percent" value={percent(report.summary.movable_percent)} />
+        <MetricCard label="pinned percent" value={percent(report.summary.pinned_percent)} />
+        <MetricCard label="manual review count" value={report.summary.manual_review_count} />
+        <MetricCard label="invalid workload count" value={report.summary.invalid_workloads} />
+      </div>
     </section>
   );
 }
 
-function ResultsTable({ rows }: { rows: Recommendation[] }) {
+function RecommendationMix({ report }: { report: RetrospectiveReport }) {
+  const rows = recTypes.filter((type): type is RecommendationType => type !== 'all');
+
+  return (
+    <section className="panel">
+      <div className="section-title">
+        <h2>Recommendation mix</h2>
+        <span>{report.summary.average_confidence} average confidence</span>
+      </div>
+      <div className="mix-grid">
+        {rows.map((type) => (
+          <div className="mix-item" key={type}>
+            <span className={`pill ${type}`}>{type}</span>
+            <strong>{report.breakdowns.recommendations_by_type[type]}</strong>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function BreakdownTable({ title, rows }: { title: string; rows: SavingsBreakdownRow[] }) {
+  return (
+    <section className="panel">
+      <div className="section-title">
+        <h2>{title}</h2>
+        <span>{rows.length} row{rows.length === 1 ? '' : 's'}</span>
+      </div>
+      <div className="table-wrap compact-table">
+        <table>
+          <thead>
+            <tr>
+              <th>group</th>
+              <th>workloads</th>
+              <th>baseline cost</th>
+              <th>recommended cost</th>
+              <th>Hard savings</th>
+              <th>carbon delta</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.key}>
+                <td>
+                  <strong>{row.key}</strong>
+                </td>
+                <td>{row.workload_count}</td>
+                <td>{money(row.baseline_cost_usd)}</td>
+                <td>{money(row.recommended_cost_usd)}</td>
+                <td>{money(row.hard_savings_usd)}</td>
+                <td>{number(row.carbon_delta_g)} g</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {rows.length === 0 ? <div className="empty-state">No counted savings in this view.</div> : null}
+      </div>
+    </section>
+  );
+}
+
+function Blockers({ report }: { report: RetrospectiveReport }) {
+  return (
+    <section className="panel">
+      <div className="section-title">
+        <h2>Blockers</h2>
+        <span>Blocked by policy, latency, capacity, and data residency</span>
+      </div>
+      <div className="blocker-grid">
+        <MetricCard label="Blocked by policy" value={report.summary.policy_violation_count} />
+        <MetricCard label="capacity blocked" value={report.summary.capacity_blocked_count} />
+        <MetricCard label="latency blocked" value={report.summary.latency_blocked_count} />
+        <MetricCard label="data residency blocked" value={report.summary.data_residency_blocked_count} />
+      </div>
+      <div className="two-column">
+        <div>
+          <h3>Top blocked reasons</h3>
+          <ul className="plain-list">
+            {report.breakdowns.blocked_reasons_count.slice(0, 8).map((item) => (
+              <li key={item.reason}>
+                <strong>{item.reason}</strong>
+                <span>{item.count}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h3>Policy violations</h3>
+          <ul className="plain-list">
+            {report.breakdowns.policy_violations.slice(0, 8).map((item) => (
+              <li key={`${item.workload_id}-${item.blocked_reasons.join('|')}`}>
+                <strong>{item.workload_id}</strong>
+                <span>{item.blocked_reasons.join(', ')}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+      <div className="excluded">
+        <h3>Excluded from savings</h3>
+        <div className="table-wrap compact-table">
+          <table>
+            <thead>
+              <tr>
+                <th>workload</th>
+                <th>action</th>
+                <th>reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              {report.breakdowns.workloads_excluded_from_savings.slice(0, 8).map((row, index) => (
+                <tr key={`${row.id}-${index}`}>
+                  <td>
+                    <strong>{row.id}</strong>
+                    <span>{row.workload_type || 'invalid'}</span>
+                  </td>
+                  <td>
+                    <span className={`pill ${row.recommendation_type}`}>{row.recommendation_type}</span>
+                  </td>
+                  <td>{row.reason}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {report.breakdowns.workloads_excluded_from_savings.length === 0 ? (
+            <div className="empty-state">No excluded workloads.</div>
+          ) : null}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function TopOpportunities({ rows }: { rows: WorkloadReportRow[] }) {
+  return (
+    <section className="panel">
+      <div className="section-title">
+        <h2>Top savings opportunities</h2>
+        <span>{rows.length} counted</span>
+      </div>
+      <div className="table-wrap compact-table">
+        <table>
+          <thead>
+            <tr>
+              <th>workload</th>
+              <th>action</th>
+              <th>region</th>
+              <th>Hard savings</th>
+              <th>reason</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.id}>
+                <td>
+                  <strong>{row.id}</strong>
+                  <span>{row.workload_type}</span>
+                </td>
+                <td>
+                  <span className={`pill ${row.recommendation_type}`}>{row.recommendation_type}</span>
+                </td>
+                <td>
+                  {row.current_region} {'->'} {row.recommended_region ?? 'none'}
+                </td>
+                <td>{money(row.hard_savings_usd)}</td>
+                <td>{row.reason}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        {rows.length === 0 ? <div className="empty-state">No hard savings counted.</div> : null}
+      </div>
+    </section>
+  );
+}
+
+function WorkloadTable({ rows }: { rows: WorkloadReportRow[] }) {
   return (
     <div className="table-wrap">
       <table>
         <thead>
           <tr>
             <th>workload</th>
+            <th>gpu</th>
+            <th>duration</th>
             <th>recommendation</th>
             <th>region</th>
-            <th>delay</th>
-            <th>savings</th>
+            <th>baseline</th>
+            <th>recommended</th>
+            <th>Hard savings</th>
             <th>carbon delta</th>
             <th>confidence</th>
+            <th>blocked reasons</th>
             <th>reason</th>
           </tr>
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr key={`${row.workload_id}-${row.recommendation}-${row.recommended_region}`}>
+          {rows.map((row, index) => (
+            <tr key={`${row.id}-${index}`}>
               <td>
-                <strong>{row.workload_id}</strong>
-                <span>{row.priority}</span>
+                <strong>{row.id}</strong>
+                <span>{row.customer_id ?? 'no customer'} / {row.workload_type || 'invalid'}</span>
               </td>
               <td>
-                <span className={`pill ${row.recommendation}`}>{row.recommendation}</span>
+                {row.gpu_count} {row.gpu_type}
+              </td>
+              <td>{number(row.expected_duration_hours)} h</td>
+              <td>
+                <span className={`pill ${row.recommendation_type}`}>{row.recommendation_type}</span>
+                <span>{row.counted_in_savings ? 'counted' : 'Excluded from savings'}</span>
               </td>
               <td>
-                {row.current_region || 'unknown'} → {row.recommended_region || 'none'}
+                {row.current_region || 'unknown'} {'->'} {row.recommended_region ?? 'none'}
               </td>
-              <td>{row.delay_minutes} min</td>
-              <td>{money(row.estimated_savings_usd)}</td>
+              <td>{money(row.baseline_cost_usd)}</td>
+              <td>{money(row.recommended_cost_usd)}</td>
+              <td>{money(row.hard_savings_usd)}</td>
               <td>{number(row.carbon_delta_g)} g</td>
               <td>{row.confidence}</td>
+              <td>{row.blocked_reasons.join(', ') || 'none'}</td>
               <td>{row.reason}</td>
             </tr>
           ))}
@@ -176,7 +389,7 @@ export function App() {
   const [step, setStep] = useState<Step>('upload');
   const [workloadFile, setWorkloadFile] = useState<File | null>(null);
   const [regionFile, setRegionFile] = useState<File | null>(null);
-  const [report, setReport] = useState<OptimizationReport | null>(null);
+  const [report, setReport] = useState<RetrospectiveReport | null>(null);
   const [runError, setRunError] = useState('');
   const [running, setRunning] = useState(false);
   const [policy, setPolicy] = useState<PolicyForm>({
@@ -190,37 +403,52 @@ export function App() {
   });
   const [filters, setFilters] = useState({
     recommendation: 'all',
-    region: 'all',
-    priority: 'all',
-    validity: 'all'
+    counted: 'all',
+    blocked_reason: 'all',
+    confidence: 'all',
+    current_region: 'all',
+    recommended_region: 'all',
+    workload_type: 'all'
   });
 
-  const regions = useMemo(() => {
-    if (!report) return [];
-    return Array.from(new Set(report.recommendations.flatMap((row) => [row.current_region, row.recommended_region]).filter(Boolean))).sort();
-  }, [report]);
+  const filterOptions = useMemo(() => {
+    if (!report) {
+      return {
+        currentRegions: [],
+        recommendedRegions: [],
+        workloadTypes: [],
+        blockedReasons: []
+      };
+    }
 
-  const priorities = useMemo(() => {
-    if (!report) return [];
-    return Array.from(new Set(report.recommendations.map((row) => row.priority))).sort();
+    return {
+      currentRegions: unique(report.rows.map((row) => row.current_region)),
+      recommendedRegions: unique(report.rows.map((row) => row.recommended_region)),
+      workloadTypes: unique(report.rows.map((row) => row.workload_type)),
+      blockedReasons: unique(report.rows.flatMap((row) => row.blocked_reasons))
+    };
   }, [report]);
 
   const filteredRows = useMemo(() => {
     if (!report) return [];
-    return report.recommendations.filter((row) => {
-      if (filters.recommendation !== 'all' && row.recommendation !== filters.recommendation) return false;
-      if (filters.region !== 'all' && row.current_region !== filters.region && row.recommended_region !== filters.region) return false;
-      if (filters.priority !== 'all' && row.priority !== filters.priority) return false;
-      if (filters.validity === 'valid' && !row.valid) return false;
-      if (filters.validity === 'invalid' && row.valid) return false;
+
+    return report.rows.filter((row) => {
+      if (filters.recommendation !== 'all' && row.recommendation_type !== filters.recommendation) return false;
+      if (filters.counted === 'counted' && !row.counted_in_savings) return false;
+      if (filters.counted === 'excluded' && row.counted_in_savings) return false;
+      if (filters.blocked_reason !== 'all' && !row.blocked_reasons.includes(filters.blocked_reason)) return false;
+      if (filters.confidence !== 'all' && row.confidence !== filters.confidence) return false;
+      if (filters.current_region !== 'all' && row.current_region !== filters.current_region) return false;
+      if (filters.recommended_region !== 'all' && row.recommended_region !== filters.recommended_region) return false;
+      if (filters.workload_type !== 'all' && row.workload_type !== filters.workload_type) return false;
       return true;
     });
   }, [filters, report]);
 
-  async function runOptimization() {
+  async function runReport() {
     setRunError('');
     if (!workloadFile || !regionFile) {
-      setRunError('Upload workload data and region data before running optimization.');
+      setRunError('Upload workload data and region data before running the report.');
       return;
     }
 
@@ -232,15 +460,15 @@ export function App() {
 
     setRunning(true);
     try {
-      const response = await fetch('/api/optimize', { method: 'POST', body });
-      const data = (await response.json()) as OptimizationReport;
+      const response = await fetch('/api/report/retrospective', { method: 'POST', body });
+      const data = (await response.json()) as RetrospectiveReport;
       setReport(data);
-      setStep(data.validation_errors.length > 0 ? 'upload' : 'results');
+      setStep(response.ok || data.rows.length > 0 ? 'results' : 'upload');
       if (!response.ok) {
-        setRunError('The optimizer could not run with the uploaded files.');
+        setRunError('The report could not run with the uploaded files.');
       }
     } catch (error) {
-      setRunError(error instanceof Error ? error.message : 'Could not reach the optimizer API.');
+      setRunError(error instanceof Error ? error.message : 'Could not reach the report API.');
     } finally {
       setRunning(false);
     }
@@ -251,7 +479,7 @@ export function App() {
       <header className="topbar">
         <div>
           <h1>Blackout Markets</h1>
-          <p>Shadow optimizer for GPU workload scheduling decisions.</p>
+          <p>Retrospective savings report for GPU workload scheduling decisions.</p>
         </div>
         <nav aria-label="Workflow">
           {(['upload', 'policy', 'results'] as Step[]).map((item) => (
@@ -270,8 +498,8 @@ export function App() {
       {step === 'upload' ? (
         <section className="screen">
           <div className="screen-head">
-            <h2>Upload workload data</h2>
-            <p>CSV files are validated before recommendations are accepted.</p>
+            <h2>Upload last week</h2>
+            <p>Load workload logs and region energy data for the retrospective report.</p>
           </div>
           <div className="upload-grid">
             <FileBox label="Workload CSV" file={workloadFile} accept=".csv,text/csv" onChange={setWorkloadFile} />
@@ -291,7 +519,7 @@ export function App() {
         <section className="screen">
           <div className="screen-head">
             <h2>Policy constraints</h2>
-            <p>Leave allowed regions empty to use every region in the uploaded region file.</p>
+            <p>Leave allowed regions empty to use every uploaded region unless another rule blocks it.</p>
           </div>
           <div className="policy-grid">
             <label>
@@ -361,8 +589,8 @@ export function App() {
             <button className="secondary" onClick={() => setStep('upload')}>
               Back to uploads
             </button>
-            <button onClick={runOptimization} disabled={running}>
-              {running ? 'Running' : 'Run shadow optimization'}
+            <button onClick={runReport} disabled={running}>
+              {running ? 'Running report' : 'Run retrospective report'}
             </button>
           </div>
         </section>
@@ -372,80 +600,135 @@ export function App() {
         <section className="screen">
           <div className="screen-head row">
             <div>
-              <h2>Scheduling report</h2>
+              <h2>Retrospective report</h2>
               <p>
-                Assumption: {report.assumptions.gpu_kwh_assumption} kWh per GPU-hour (
-                {report.assumptions.gpu_kwh_assumption_source}).
+                Cost: {report.assumptions.cost_formula}. Default PUE: {report.assumptions.default_pue}. GPU assumption:{' '}
+                {report.assumptions.gpu_kwh_assumption} kWh per GPU-hour ({report.assumptions.gpu_kwh_assumption_source}).
               </p>
             </div>
             <div className="actions compact">
               <button
                 className="secondary"
-                onClick={() => download('blackout-report.json', JSON.stringify(report, null, 2), 'application/json')}
+                onClick={() => download('blackout-retrospective-report.json', JSON.stringify(report, null, 2), 'application/json')}
               >
-                Export JSON
+                Export full report JSON
               </button>
               <button
-                onClick={() => download('blackout-recommendations.csv', recommendationsToCsv(report.recommendations), 'text/csv')}
+                onClick={() => download('blackout-workload-report.csv', workloadReportRowsToCsv(report.rows), 'text/csv')}
               >
-                Export CSV
+                Export workload report CSV
               </button>
             </div>
           </div>
-          <Summary report={report} />
           <ValidationList report={report} />
-          <div className="filters">
-            <label>
-              <span>recommendation</span>
-              <select
-                value={filters.recommendation}
-                onChange={(event) => setFilters({ ...filters, recommendation: event.target.value })}
-              >
-                {recTypes.map((type) => (
-                  <option key={type} value={type}>
-                    {type}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>region</span>
-              <select value={filters.region} onChange={(event) => setFilters({ ...filters, region: event.target.value })}>
-                <option value="all">all</option>
-                {regions.map((region) => (
-                  <option key={region} value={region}>
-                    {region}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>priority</span>
-              <select
-                value={filters.priority}
-                onChange={(event) => setFilters({ ...filters, priority: event.target.value })}
-              >
-                <option value="all">all</option>
-                {priorities.map((priority) => (
-                  <option key={priority} value={priority}>
-                    {priority}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>validity</span>
-              <select
-                value={filters.validity}
-                onChange={(event) => setFilters({ ...filters, validity: event.target.value })}
-              >
-                <option value="all">all</option>
-                <option value="valid">valid</option>
-                <option value="invalid">invalid</option>
-              </select>
-            </label>
+          <ExecutiveSummary report={report} />
+          <RecommendationMix report={report} />
+          <div className="breakdown-grid">
+            <BreakdownTable title="Savings by workload type" rows={report.breakdowns.savings_by_workload_type} />
+            <BreakdownTable title="Savings by current region" rows={report.breakdowns.savings_by_current_region} />
+            <BreakdownTable title="Savings by recommended region" rows={report.breakdowns.savings_by_recommended_region} />
           </div>
-          <ResultsTable rows={filteredRows} />
+          <Blockers report={report} />
+          <TopOpportunities rows={report.breakdowns.top_savings_opportunities} />
+          <section className="panel">
+            <div className="section-title">
+              <h2>Workload details</h2>
+              <span>{filteredRows.length} shown</span>
+            </div>
+            <div className="filters">
+              <label>
+                <span>recommendation</span>
+                <select
+                  value={filters.recommendation}
+                  onChange={(event) => setFilters({ ...filters, recommendation: event.target.value })}
+                >
+                  {recTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>counted in savings</span>
+                <select value={filters.counted} onChange={(event) => setFilters({ ...filters, counted: event.target.value })}>
+                  <option value="all">all</option>
+                  <option value="counted">counted</option>
+                  <option value="excluded">Excluded from savings</option>
+                </select>
+              </label>
+              <label>
+                <span>blocked reason</span>
+                <select
+                  value={filters.blocked_reason}
+                  onChange={(event) => setFilters({ ...filters, blocked_reason: event.target.value })}
+                >
+                  <option value="all">all</option>
+                  {filterOptions.blockedReasons.map((reason) => (
+                    <option key={reason} value={reason}>
+                      {reason}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>confidence</span>
+                <select
+                  value={filters.confidence}
+                  onChange={(event) => setFilters({ ...filters, confidence: event.target.value })}
+                >
+                  {confidenceTypes.map((value) => (
+                    <option key={value} value={value}>
+                      {value}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>current region</span>
+                <select
+                  value={filters.current_region}
+                  onChange={(event) => setFilters({ ...filters, current_region: event.target.value })}
+                >
+                  <option value="all">all</option>
+                  {filterOptions.currentRegions.map((region) => (
+                    <option key={region} value={region}>
+                      {region}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>recommended region</span>
+                <select
+                  value={filters.recommended_region}
+                  onChange={(event) => setFilters({ ...filters, recommended_region: event.target.value })}
+                >
+                  <option value="all">all</option>
+                  {filterOptions.recommendedRegions.map((region) => (
+                    <option key={region} value={region}>
+                      {region}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>workload type</span>
+                <select
+                  value={filters.workload_type}
+                  onChange={(event) => setFilters({ ...filters, workload_type: event.target.value })}
+                >
+                  <option value="all">all</option>
+                  {filterOptions.workloadTypes.map((type) => (
+                    <option key={type} value={type}>
+                      {type}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+            <WorkloadTable rows={filteredRows} />
+          </section>
         </section>
       ) : null}
     </main>

@@ -52,6 +52,7 @@ export interface Policy {
 export interface Assumptions {
   gpu_kwh_assumption: number;
   gpu_kwh_assumption_source: 'default' | 'user';
+  default_pue?: number;
 }
 
 export interface ValidationError {
@@ -116,4 +117,124 @@ export interface OptimizationReport {
   };
   recommendations: Recommendation[];
   validation_errors: ValidationError[];
+}
+
+export interface EstimateAssumptions {
+  region: string;
+  gpu_count: number;
+  expected_duration_hours: number;
+  gpu_kwh_assumption: number;
+  gpu_kwh_assumption_source: 'default' | 'user';
+  pue: number;
+  pue_source: 'region' | 'default';
+  electricity_price_per_kwh: number;
+  carbon_intensity_g_per_kwh: number;
+  estimated_kwh: number;
+}
+
+export interface WorkloadReportRow {
+  id: string;
+  customer_id?: string;
+  workload_type: string;
+  gpu_type: string;
+  gpu_count: number;
+  expected_duration_minutes: number;
+  expected_duration_hours: number;
+  current_region: string;
+  recommended_region: string | null;
+  recommendation_type: RecommendationType;
+  baseline_cost_usd: number;
+  recommended_cost_usd: number;
+  hard_savings_usd: number;
+  baseline_carbon_g: number;
+  recommended_carbon_g: number;
+  carbon_delta_g: number;
+  confidence: Confidence;
+  reason: string;
+  blocked_reasons: string[];
+  counted_in_savings: boolean;
+  valid: boolean;
+  priority: Priority;
+  assumptions: {
+    baseline: EstimateAssumptions | null;
+    recommended: EstimateAssumptions | null;
+    hard_savings_rule: string;
+  };
+}
+
+export interface SavingsBreakdownRow {
+  key: string;
+  workload_count: number;
+  baseline_cost_usd: number;
+  recommended_cost_usd: number;
+  hard_savings_usd: number;
+  baseline_carbon_g: number;
+  recommended_carbon_g: number;
+  carbon_delta_g: number;
+}
+
+export interface RetrospectiveReportAssumptions {
+  gpu_kwh_assumption: number;
+  gpu_kwh_assumption_source: 'default' | 'user';
+  default_pue: number;
+  cost_formula: string;
+  carbon_formula: string;
+  hard_savings_rule: string;
+  delay_savings_rule: string;
+  future_forecast_available: boolean;
+}
+
+export interface RetrospectiveReport {
+  generated_at: string;
+  assumptions: RetrospectiveReportAssumptions;
+  summary: {
+    total_workloads: number;
+    valid_workloads: number;
+    invalid_workloads: number;
+    run_now_count: number;
+    move_region_count: number;
+    delay_count: number;
+    manual_review_count: number;
+    pinned_count: number;
+    movable_count: number;
+    movable_percent: number;
+    pinned_percent: number;
+    baseline_cost_usd: number;
+    recommended_cost_usd: number;
+    hard_savings_usd: number;
+    hard_savings_percent: number;
+    baseline_carbon_g: number;
+    recommended_carbon_g: number;
+    carbon_delta_g: number;
+    carbon_delta_percent: number;
+    average_confidence: number;
+    policy_violation_count: number;
+    capacity_blocked_count: number;
+    latency_blocked_count: number;
+    data_residency_blocked_count: number;
+  };
+  breakdowns: {
+    savings_by_workload_type: SavingsBreakdownRow[];
+    savings_by_current_region: SavingsBreakdownRow[];
+    savings_by_recommended_region: SavingsBreakdownRow[];
+    recommendations_by_type: Record<RecommendationType, number>;
+    blocked_reasons_count: Array<{ reason: string; count: number }>;
+    confidence_breakdown: Record<Confidence, number>;
+    policy_violations: Array<{ workload_id: string; reason: string; blocked_reasons: string[] }>;
+    top_savings_opportunities: WorkloadReportRow[];
+    workloads_excluded_from_savings: WorkloadReportRow[];
+  };
+  rows: WorkloadReportRow[];
+  validation_errors: ValidationError[];
+}
+
+export interface BuildRetrospectiveReportInput {
+  workloads: Workload[];
+  regions: Region[];
+  policy: Policy;
+  assumptions: Assumptions;
+  validation_errors?: ValidationError[];
+  invalid_rows?: InvalidRow[];
+  generated_at?: string;
+  future_forecast_available?: boolean;
 }

@@ -1,0 +1,4 @@
+id,workload_type,gpu_type,gpu_count,expected_duration_minutes,deadline_minutes_from_now,current_region,allowed_regions,priority,latency_sensitive,max_latency_ms,can_delay,can_move,checkpointable,data_residency_region,estimated_revenue_usd
+job-1,training,h100,4,60,240,us-east-1,us-east-1|us-west-2,normal,false,,true,true,true,,120
+job-2,inference,l40,2,30,90,us-east-1,us-east-1|us-west-2,critical,false,,true,true,true,,80
+job-3,batch,a100,1,45,180,us-east-1,us-east-1,low,false,,true,false,true,,20

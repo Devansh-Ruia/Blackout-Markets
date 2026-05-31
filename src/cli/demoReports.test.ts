@@ -9,11 +9,11 @@ function cleanOut() {
   mkdirSync(outRoot, { recursive: true });
 }
 
-async function runDemoReports(options: { fixtureRoot?: string; outRoot?: string }) {
+async function generateDemoReports(options: { fixtureRoot?: string; outRoot?: string }) {
   const mod = await import('./demoReports');
   const messages: string[] = [];
   const errors: string[] = [];
-  const code = await mod.runDemoReports(options, {
+  const code = await mod.generateDemoReports(options, {
     log: (message) => messages.push(message),
     error: (message) => errors.push(message)
   });
@@ -24,7 +24,7 @@ describe('demo report CLI', () => {
   it('generates demo reports for every fixture dataset', async () => {
     cleanOut();
 
-    const result = await runDemoReports({ fixtureRoot: 'fixtures', outRoot });
+    const result = await generateDemoReports({ fixtureRoot: 'fixtures', outRoot });
 
     expect(result.code).toBe(0);
     expect(result.messages.join('\n')).toContain('Generated demo reports');
@@ -42,10 +42,10 @@ describe('demo report CLI', () => {
 
   it('fails clearly when a fixture file is missing', async () => {
     cleanOut();
-    const result = await runDemoReports({ fixtureRoot: join(outRoot, 'missing-fixtures'), outRoot });
+    const result = await generateDemoReports({ fixtureRoot: join(outRoot, 'missing-fixtures'), outRoot });
 
     expect(result.code).toBe(1);
-    expect(result.errors.join('\n')).toContain('Missing fixture file for normal-week');
-    expect(result.errors.join('\n')).toContain('workloads.csv');
+    expect(result.errors.join('\n')).toContain('Missing fixture folder for normal-week');
+    expect(result.errors.join('\n')).toContain('missing-fixtures');
   });
 });

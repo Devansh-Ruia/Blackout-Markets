@@ -275,6 +275,7 @@ describe('diagnostic exports', () => {
     expect(markdown).toContain('## Data Quality');
     expect(markdown).toContain('## Assumptions');
     expect(markdown).toContain('## What This Report Does Not Claim');
+    expect(markdown).toContain('## Recommended Next Step');
     expect(markdown).toContain('not counted because forecast data was not provided');
     expect(markdown).not.toContain('shadow mode for 2 weeks in shadow mode');
   });

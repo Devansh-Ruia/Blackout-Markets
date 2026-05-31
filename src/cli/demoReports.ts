@@ -21,6 +21,10 @@ function isFile(path: string) {
   return existsSync(path) && statSync(path).isFile();
 }
 
+function isDirectory(path: string) {
+  return existsSync(path) && statSync(path).isDirectory();
+}
+
 function isNonEmptyFile(path: string) {
   return isFile(path) && statSync(path).size > 0;
 }
@@ -29,13 +33,18 @@ function displayPath(path: string) {
   return path.replaceAll('\\', '/');
 }
 
-export async function runDemoReports(options: DemoReportOptions = {}, logger: Logger = console) {
+export async function generateDemoReports(options: DemoReportOptions = {}, logger: Logger = console) {
   const fixtureRoot = options.fixtureRoot ?? 'fixtures';
   const outRoot = options.outRoot ?? 'reports/demo';
   const generated: Array<{ name: string; outDir: string }> = [];
 
   for (const name of fixtureNames) {
     const fixtureDir = join(fixtureRoot, name);
+    if (!isDirectory(fixtureDir)) {
+      logger.error(`Missing fixture folder for ${name}: ${displayPath(fixtureDir)}`);
+      return 1;
+    }
+
     for (const file of fixtureFiles) {
       const path = join(fixtureDir, file);
       if (!isFile(path)) {
@@ -90,8 +99,10 @@ export async function runDemoReports(options: DemoReportOptions = {}, logger: Lo
   return 0;
 }
 
+export const runDemoReports = generateDemoReports;
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  runDemoReports().then((code) => {
+  generateDemoReports().then((code) => {
     process.exitCode = code;
   });
 }

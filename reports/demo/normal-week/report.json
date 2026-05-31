@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-31T02:36:39.662Z",
+  "generated_at": "2026-05-31T02:53:07.604Z",
   "raw_policy": {
     "max_delay_minutes": 90,
     "allowed_regions": [
@@ -1248,7 +1248,7 @@
     ]
   },
   "diagnostic": {
-    "generated_at": "2026-05-31T02:36:39.662Z",
+    "generated_at": "2026-05-31T02:53:07.604Z",
     "executive_summary": "Based on uploaded data, Blackout found 2 move recommendations and $2.05 in expected estimated savings. This requires validation against actual billing.",
     "workload_flexibility_summary": "75% of valid workloads appear movable. 25% are pinned by workload or residency constraints.",
     "estimated_savings_range": {

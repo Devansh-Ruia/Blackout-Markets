@@ -1,0 +1,6 @@
+id,workload_type,priority,current_region,recommended_region,recommendation,confidence,reason,baseline_cost,recommended_cost,estimated_savings,baseline_carbon,recommended_carbon,carbon_delta,delay_minutes,valid,validation_errors
+low-latency-ads-009,inference,critical,us-east-1,us-east-1,manual_review,low,"Manual review because no approved region satisfies capacity, latency, residency, carbon, and region policy.",0.3587,0.3587,0,888.16,888.16,0,0,true,
+risk-review-088,training,critical,us-east-1,us-central-1,manual_review,medium,"Manual review because this critical workload could move to us-central-1, but critical priority should not move automatically.",5.7389,3.0643,0,14210.56,4085.76,-10124.8,0,true,
+resident-bank-001,training,high,eu-west-1,eu-west-1,pinned,high,Pinned because data residency pins it to eu-west-1.,1.685,1.685,0,892.08,892.08,0,0,true,
+carbon-batch-041,batch,normal,us-east-1,us-central-1,move_region,medium,Moved from us-east-1 to us-central-1 because estimated energy cost and carbon are lower and policy allows it.,2.6901,1.4364,1.2537,6661.2,1915.2,-4746,0,true,
+pinned-etl-019,batch,low,us-east-1,us-east-1,delay,medium,Delay because us-east-1 is above the carbon ceiling and this job cannot move. This delay is not counted because no forecast data was provided.,0.538,0.538,0,1332.24,1332.24,0,90,true,

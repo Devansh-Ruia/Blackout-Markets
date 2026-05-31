@@ -398,7 +398,7 @@ export function diagnosticReportToMarkdown(report: RetrospectiveReport) {
   const pilotText = pilot.recommended
     ? [
         `Start with ${pilot.recommended_workload_types.join(', ')} workloads in ${pilot.recommended_regions.join(', ')}.`,
-        `Run in shadow mode for ${pilot.suggested_pilot_duration}.`,
+        `Run for ${pilot.suggested_pilot_duration}.`,
         `Success metric: ${pilot.suggested_success_metric}`,
         `Reason: ${pilot.reason}`,
         `Do not include priority levels: ${pilot.excluded_priority_levels.join(', ')}.`,
@@ -436,7 +436,7 @@ ${diagnostic.top_pinned_workload_types.length === 0 ? '- No pinned workload type
 - Expected estimate: ${money(report.savings_range.expected_usd)}
 - High estimate: ${money(report.savings_range.high_usd)}
 
-Estimated range, not billing truth. ${report.savings_range.note}
+This is a ${report.savings_range.note}
 
 Estimated carbon impact: ${diagnostic.estimated_carbon_impact}
 

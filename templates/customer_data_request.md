@@ -71,12 +71,13 @@ Empty `allowed_regions` means every uploaded region can be considered unless ano
 - `customer_id` can be hashed.
 - Workload IDs can be random.
 - Exact revenue can be omitted.
+- Model names and customer names should be removed.
 - Workload type names can be coarse, such as `embedding_batch`, `eval`, `training`, or `online_inference`.
 - Region names should stay real enough to match energy and latency data.
 
 ## What Not To Include
 
-Do not include secrets, credentials, customer names, model contents, prompts, training data, source code, private URLs, or production scheduler tokens.
+Do not include secrets, credentials, API keys, customer names, model contents, private prompts, training data, user data, source code, private URLs, or production scheduler tokens.
 
 ## How Blackout Uses The Data
 

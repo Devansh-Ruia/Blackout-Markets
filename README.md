@@ -10,12 +10,24 @@ Based on historical workload logs, what would Blackout have recommended, how muc
 
 Shadow mode only. No jobs are moved. The app uses uploaded customer data and policy settings to produce an offline report for review. It is not live scheduling, billing, carbon accounting, or production automation.
 
+## MVP Snapshot
+
+- What it does: runs a retrospective shadow diagnostic on uploaded GPU workload, region, and policy data.
+- Web app: run `npm run dev`, then open `http://127.0.0.1:5173`.
+- CLI report: run `npm run report -- --workloads fixtures/normal-week/workloads.csv --regions fixtures/normal-week/regions.csv --policy fixtures/normal-week/policy.json --out reports/normal-week`.
+- Demo reports: run `npm run demo:reports` to generate `reports/demo/normal-week/`, `reports/demo/grid-stress-week/`, and `reports/demo/policy-heavy-week/`.
+- Design-partner packet: see [design-partner/overview.md](design-partner/overview.md).
+- Data templates: see [templates/](templates/).
+- Deployment prep: see [docs/deployment.md](docs/deployment.md).
+- Current boundaries: no live scheduling, forecasting, cloud integration, auth, billing, database, marketplace, Kubernetes controller, Ray integration, or Slurm integration.
+
 ## Commands
 
 ```bash
 npm install
 npm run dev
 npm run report -- --workloads fixtures/normal-week/workloads.csv --regions fixtures/normal-week/regions.csv --policy fixtures/normal-week/policy.json --out reports/normal-week
+npm run demo:reports
 npm test
 npm run build
 npm start
@@ -94,6 +106,14 @@ Outputs:
 - `diagnostic.md`
 
 The CLI creates the output directory if it is missing. It fails with a nonzero exit code when an input path is missing, a CSV cannot be parsed, policy JSON is invalid, or the files do not validate together.
+
+Generate all fixture demo reports:
+
+```bash
+npm run demo:reports
+```
+
+Outputs are written under `reports/demo/`. The sample output index lives at [design-partner/sample_outputs.md](design-partner/sample_outputs.md).
 
 Optional assumptions:
 

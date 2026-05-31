@@ -17,6 +17,7 @@ import { validateDataset } from '../domain/validation';
 const app = express();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 4 * 1024 * 1024 } });
 const port = Number(process.env.PORT ?? 3001);
+const host = process.env.HOST ?? '127.0.0.1';
 
 app.use(express.json({ limit: '1mb' }));
 
@@ -231,6 +232,6 @@ app.get('*', (_req, res, next) => {
   res.sendFile(path.join(staticDir, 'index.html'));
 });
 
-app.listen(port, '127.0.0.1', () => {
-  console.log(`Blackout Markets API listening on http://127.0.0.1:${port}`);
+app.listen(port, host, () => {
+  console.log(`Blackout Markets API listening on http://${host}:${port}`);
 });

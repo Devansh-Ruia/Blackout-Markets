@@ -11,6 +11,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "report": "tsx src/cli/report.ts",
+    "demo:reports": "tsx src/cli/demoReports.ts",
     "start": "tsx src/server/index.ts"
   },
   "dependencies": {

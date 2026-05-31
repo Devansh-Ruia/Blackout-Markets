@@ -1,0 +1,5 @@
+id,workload_type,priority,current_region,recommended_region,recommendation,confidence,reason,baseline_cost,recommended_cost,estimated_savings,baseline_carbon,recommended_carbon,carbon_delta,delay_minutes,valid,validation_errors
+serve-alpha-017,inference,critical,us-east-1,us-east-1,run_now,high,"Run now in us-east-1; no approved move improves estimated cost, carbon, capacity, and policy enough. Cannot delay because deadline would be missed. latency policy prevents approved moves above the workload limit.",0.6048,0.6048,0,1512,1512,0,0,true,
+finetune-gamma-021,training,high,eu-west-1,eu-west-1,pinned,high,Pinned because data residency pins it to eu-west-1.,1.0573,1.0573,0,594.72,594.72,0,0,true,
+train-alpha-001,training,normal,us-east-1,us-west-2,move_region,high,Moved from us-east-1 to us-west-2 because estimated energy cost and carbon are lower and policy allows it.,3.6288,1.6632,1.9656,9072,2217.6,-6854.4,0,true,
+batch-beta-044,batch,low,us-central-1,us-west-2,move_region,high,Moved from us-central-1 to us-west-2 because estimated energy cost and carbon are lower and policy allows it.,0.2898,0.2079,0.0819,531.3,277.2,-254.1,0,true,

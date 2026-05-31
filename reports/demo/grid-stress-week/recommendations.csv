@@ -1,0 +1,6 @@
+id,workload_type,priority,current_region,recommended_region,recommendation,confidence,reason,baseline_cost,recommended_cost,estimated_savings,baseline_carbon,recommended_carbon,carbon_delta,delay_minutes,valid,validation_errors
+serve-zeta-301,inference,critical,us-east-1,us-central-1,manual_review,medium,"Manual review because this critical workload could move to us-central-1, but critical priority should not move automatically.",0.625,0.2352,0,1796.76,423.36,-1373.4,0,true,
+train-delta-100,training,normal,us-east-1,us-west-2,move_region,high,Moved from us-east-1 to us-west-2 because estimated energy cost and carbon are lower and policy allows it.,6.6662,1.9712,4.695,19165.44,2710.4,-16455.04,0,true,
+train-delta-101,training,normal,us-east-1,us-central-1,move_region,high,Moved from us-east-1 to us-central-1 because estimated energy cost and carbon are lower and policy allows it.,5.833,2.1952,3.6378,16769.76,3951.36,-12818.4,0,true,
+batch-epsilon-200,batch,low,us-east-1,us-east-1,delay,medium,Delay because us-east-1 has high grid stress and no approved move improves the score. This delay is not counted because no forecast data was provided.,3.3331,3.3331,0,9582.72,9582.72,0,120,true,
+cleanup-eta-010,batch,low,us-east-1,us-east-1,pinned,high,Pinned because can_move is false; workload cannot move.,0.4166,0.4166,0,1197.84,1197.84,0,0,true,

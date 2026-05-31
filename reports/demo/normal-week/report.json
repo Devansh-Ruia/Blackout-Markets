@@ -1,0 +1,1522 @@
+{
+  "generated_at": "2026-05-31T02:36:39.662Z",
+  "raw_policy": {
+    "max_delay_minutes": 90,
+    "allowed_regions": [
+      "us-east-1",
+      "us-west-2",
+      "us-central-1",
+      "eu-west-1"
+    ],
+    "blocked_regions": [],
+    "carbon_ceiling_g_per_kwh": null,
+    "max_latency_ms": null,
+    "require_manual_for_low_confidence": true
+  },
+  "assumptions": {
+    "gpu_kwh_assumption": 0.7,
+    "gpu_kwh_assumption_source": "default",
+    "default_pue": 1.2,
+    "cost_formula": "estimated_kwh = gpu_count * expected_duration_hours * gpu_kwh_assumption * pue; cost_usd = estimated_kwh * electricity_price_per_kwh",
+    "carbon_formula": "carbon_g = estimated_kwh * carbon_intensity_g_per_kwh",
+    "hard_savings_rule": "Hard savings count only valid automatic move_region recommendations with concrete current and recommended energy data.",
+    "delay_savings_rule": "Delay savings are not counted unless future forecast data is provided.",
+    "future_forecast_available": false
+  },
+  "workload_input_summary": {
+    "total_rows": 4,
+    "valid_rows": 4,
+    "invalid_rows": 0,
+    "by_priority": {
+      "critical": 1,
+      "high": 1,
+      "normal": 1,
+      "low": 1
+    },
+    "by_workload_type": [
+      {
+        "workload_type": "training",
+        "count": 2
+      },
+      {
+        "workload_type": "batch",
+        "count": 1
+      },
+      {
+        "workload_type": "inference",
+        "count": 1
+      }
+    ]
+  },
+  "region_input_summary": {
+    "total_regions": 4,
+    "total_gpu_available": 60,
+    "by_grid_stress": {
+      "low": 2,
+      "medium": 2,
+      "high": 0
+    },
+    "regions": [
+      {
+        "region": "eu-west-1",
+        "gpu_available": 8,
+        "electricity_price_per_kwh": 0.16,
+        "carbon_intensity_g_per_kwh": 90,
+        "grid_stress": "medium",
+        "pue": 1.18
+      },
+      {
+        "region": "us-central-1",
+        "gpu_available": 12,
+        "electricity_price_per_kwh": 0.12,
+        "carbon_intensity_g_per_kwh": 220,
+        "grid_stress": "low",
+        "pue": 1.15
+      },
+      {
+        "region": "us-east-1",
+        "gpu_available": 24,
+        "electricity_price_per_kwh": 0.18,
+        "carbon_intensity_g_per_kwh": 450,
+        "grid_stress": "medium",
+        "pue": 1.2
+      },
+      {
+        "region": "us-west-2",
+        "gpu_available": 16,
+        "electricity_price_per_kwh": 0.09,
+        "carbon_intensity_g_per_kwh": 120,
+        "grid_stress": "low",
+        "pue": 1.1
+      }
+    ]
+  },
+  "summary": {
+    "total_workloads": 4,
+    "valid_workloads": 4,
+    "invalid_workloads": 0,
+    "run_now_count": 1,
+    "move_region_count": 2,
+    "delay_count": 0,
+    "manual_review_count": 0,
+    "pinned_count": 1,
+    "movable_count": 3,
+    "movable_percent": 75,
+    "pinned_percent": 25,
+    "baseline_cost_usd": 5.5807,
+    "recommended_cost_usd": 3.5332,
+    "hard_savings_usd": 2.0475,
+    "hard_savings_percent": 52.2508,
+    "estimated_savings_usd": 2.0475,
+    "estimated_savings_percent": 52.2508,
+    "total_baseline_cost_usd": 5.5807,
+    "total_recommended_cost_usd": 3.5332,
+    "baseline_carbon_g": 11710.02,
+    "recommended_carbon_g": 4601.52,
+    "total_baseline_carbon_g": 11710.02,
+    "total_recommended_carbon_g": 4601.52,
+    "carbon_delta_g": -7108.5,
+    "carbon_delta_percent": -74.0214,
+    "average_confidence": 1,
+    "policy_violation_count": 4,
+    "capacity_blocked_count": 1,
+    "latency_blocked_count": 1,
+    "data_residency_blocked_count": 1
+  },
+  "savings_range": {
+    "low_usd": 1.02,
+    "expected_usd": 2.05,
+    "high_usd": 2.56,
+    "note": "rough planning range, not billing truth. Validate against actual billing before using it for commitments."
+  },
+  "data_quality": {
+    "score": "high",
+    "numeric_score": 92,
+    "reasons": [
+      "Uploaded data is strong enough for a focused pilot discussion."
+    ],
+    "warnings": [
+      "No blocked regions configured.",
+      "Carbon ceiling is missing.",
+      "Max latency policy is missing."
+    ]
+  },
+  "not_counted_savings": [
+    {
+      "item": "Delay savings",
+      "reason": "Delay savings are not counted because forecast data was not provided."
+    },
+    {
+      "item": "Demand response revenue",
+      "reason": "Demand response revenue is not counted because no utility or market program data was uploaded."
+    },
+    {
+      "item": "Utility bill reconciliation",
+      "reason": "Utility bill reconciliation is not included."
+    },
+    {
+      "item": "Live cloud inventory",
+      "reason": "Live cloud inventory is not included."
+    },
+    {
+      "item": "Capacity reservation",
+      "reason": "Capacity is batch-local in this report, not a real reservation system."
+    },
+    {
+      "item": "Customer contract pricing",
+      "reason": "Customer contract pricing is not included unless reflected in uploaded energy prices."
+    },
+    {
+      "item": "Cooling estimates",
+      "reason": "Cooling estimates use uploaded PUE or the default PUE assumption."
+    }
+  ],
+  "breakdowns": {
+    "savings_by_workload_type": [
+      {
+        "key": "training",
+        "workload_count": 2,
+        "baseline_cost_usd": 3.6288,
+        "recommended_cost_usd": 1.6632,
+        "hard_savings_usd": 1.9656,
+        "baseline_carbon_g": 9072,
+        "recommended_carbon_g": 2217.6,
+        "carbon_delta_g": -6854.4
+      },
+      {
+        "key": "batch",
+        "workload_count": 1,
+        "baseline_cost_usd": 0.2898,
+        "recommended_cost_usd": 0.2079,
+        "hard_savings_usd": 0.0819,
+        "baseline_carbon_g": 531.3,
+        "recommended_carbon_g": 277.2,
+        "carbon_delta_g": -254.1
+      },
+      {
+        "key": "inference",
+        "workload_count": 1,
+        "baseline_cost_usd": 0,
+        "recommended_cost_usd": 0,
+        "hard_savings_usd": 0,
+        "baseline_carbon_g": 0,
+        "recommended_carbon_g": 0,
+        "carbon_delta_g": 0
+      }
+    ],
+    "savings_by_current_region": [
+      {
+        "key": "us-east-1",
+        "workload_count": 2,
+        "baseline_cost_usd": 3.6288,
+        "recommended_cost_usd": 1.6632,
+        "hard_savings_usd": 1.9656,
+        "baseline_carbon_g": 9072,
+        "recommended_carbon_g": 2217.6,
+        "carbon_delta_g": -6854.4
+      },
+      {
+        "key": "us-central-1",
+        "workload_count": 1,
+        "baseline_cost_usd": 0.2898,
+        "recommended_cost_usd": 0.2079,
+        "hard_savings_usd": 0.0819,
+        "baseline_carbon_g": 531.3,
+        "recommended_carbon_g": 277.2,
+        "carbon_delta_g": -254.1
+      },
+      {
+        "key": "eu-west-1",
+        "workload_count": 1,
+        "baseline_cost_usd": 0,
+        "recommended_cost_usd": 0,
+        "hard_savings_usd": 0,
+        "baseline_carbon_g": 0,
+        "recommended_carbon_g": 0,
+        "carbon_delta_g": 0
+      }
+    ],
+    "savings_by_recommended_region": [
+      {
+        "key": "us-west-2",
+        "workload_count": 2,
+        "baseline_cost_usd": 3.9186,
+        "recommended_cost_usd": 1.8711,
+        "hard_savings_usd": 2.0475,
+        "baseline_carbon_g": 9603.3,
+        "recommended_carbon_g": 2494.8,
+        "carbon_delta_g": -7108.5
+      },
+      {
+        "key": "eu-west-1",
+        "workload_count": 1,
+        "baseline_cost_usd": 0,
+        "recommended_cost_usd": 0,
+        "hard_savings_usd": 0,
+        "baseline_carbon_g": 0,
+        "recommended_carbon_g": 0,
+        "carbon_delta_g": 0
+      },
+      {
+        "key": "us-east-1",
+        "workload_count": 1,
+        "baseline_cost_usd": 0,
+        "recommended_cost_usd": 0,
+        "hard_savings_usd": 0,
+        "baseline_carbon_g": 0,
+        "recommended_carbon_g": 0,
+        "carbon_delta_g": 0
+      }
+    ],
+    "recommendations_by_type": {
+      "run_now": 1,
+      "delay": 0,
+      "move_region": 2,
+      "manual_review": 0,
+      "pinned": 1,
+      "invalid": 0
+    },
+    "recommendations_by_priority": {
+      "critical": {
+        "run_now": 1,
+        "delay": 0,
+        "move_region": 0,
+        "manual_review": 0,
+        "pinned": 0,
+        "invalid": 0
+      },
+      "high": {
+        "run_now": 0,
+        "delay": 0,
+        "move_region": 0,
+        "manual_review": 0,
+        "pinned": 1,
+        "invalid": 0
+      },
+      "normal": {
+        "run_now": 0,
+        "delay": 0,
+        "move_region": 1,
+        "manual_review": 0,
+        "pinned": 0,
+        "invalid": 0
+      },
+      "low": {
+        "run_now": 0,
+        "delay": 0,
+        "move_region": 1,
+        "manual_review": 0,
+        "pinned": 0,
+        "invalid": 0
+      }
+    },
+    "blocked_reasons_count": [
+      {
+        "reason": "region_policy",
+        "count": 4
+      },
+      {
+        "reason": "capacity",
+        "count": 1
+      },
+      {
+        "reason": "data_residency",
+        "count": 1
+      },
+      {
+        "reason": "latency",
+        "count": 1
+      }
+    ],
+    "top_could_not_move_reasons": [
+      {
+        "reason": "Cannot move because policy blocks the available target regions.",
+        "count": 2
+      },
+      {
+        "reason": "Cannot move because data residency pins this workload to eu-west-1.",
+        "count": 1
+      },
+      {
+        "reason": "Cannot move because latency policy would be exceeded.",
+        "count": 1
+      },
+      {
+        "reason": "Pinned because data residency pins it to eu-west-1.",
+        "count": 1
+      }
+    ],
+    "confidence_breakdown": {
+      "high": 4,
+      "medium": 0,
+      "low": 0
+    },
+    "policy_violations": [
+      {
+        "workload_id": "serve-alpha-017",
+        "reason": "Run now in us-east-1; no approved move improves estimated cost, carbon, capacity, and policy enough. Cannot delay because deadline would be missed. latency policy prevents approved moves above the workload limit.",
+        "blocked_reasons": [
+          "latency",
+          "region_policy"
+        ]
+      },
+      {
+        "workload_id": "finetune-gamma-021",
+        "reason": "Pinned because data residency pins it to eu-west-1.",
+        "blocked_reasons": [
+          "data_residency",
+          "region_policy"
+        ]
+      },
+      {
+        "workload_id": "train-alpha-001",
+        "reason": "Moved from us-east-1 to us-west-2 because estimated energy cost and carbon are lower and policy allows it.",
+        "blocked_reasons": [
+          "capacity",
+          "region_policy"
+        ]
+      },
+      {
+        "workload_id": "batch-beta-044",
+        "reason": "Moved from us-central-1 to us-west-2 because estimated energy cost and carbon are lower and policy allows it.",
+        "blocked_reasons": [
+          "region_policy"
+        ]
+      }
+    ],
+    "top_savings_opportunities": [
+      {
+        "id": "train-alpha-001",
+        "customer_id": "alpha",
+        "workload_type": "training",
+        "gpu_type": "h100",
+        "gpu_count": 8,
+        "expected_duration_minutes": 180,
+        "expected_duration_hours": 3,
+        "current_region": "us-east-1",
+        "recommended_region": "us-west-2",
+        "recommendation_type": "move_region",
+        "recommendation": "move_region",
+        "baseline_cost_usd": 3.6288,
+        "recommended_cost_usd": 1.6632,
+        "hard_savings_usd": 1.9656,
+        "estimated_savings_usd": 1.9656,
+        "baseline_carbon_g": 9072,
+        "recommended_carbon_g": 2217.6,
+        "carbon_delta_g": -6854.4,
+        "delay_minutes": 0,
+        "confidence": "high",
+        "reason": "Moved from us-east-1 to us-west-2 because estimated energy cost and carbon are lower and policy allows it.",
+        "blocked_reasons": [
+          "capacity",
+          "region_policy"
+        ],
+        "could_not_move_reasons": [
+          "Cannot move because policy blocks the available target regions."
+        ],
+        "counted_in_savings": true,
+        "valid": true,
+        "priority": "normal",
+        "latency_sensitive": false,
+        "validation_errors": [],
+        "capacity_checked": true,
+        "capacity_reserved": 8,
+        "remaining_region_capacity_after_assignment": 8,
+        "capacity_reason": null,
+        "assumptions": {
+          "baseline": {
+            "region": "us-east-1",
+            "gpu_count": 8,
+            "expected_duration_hours": 3,
+            "gpu_kwh_assumption": 0.7,
+            "gpu_kwh_assumption_source": "default",
+            "pue": 1.2,
+            "pue_source": "region",
+            "electricity_price_per_kwh": 0.18,
+            "carbon_intensity_g_per_kwh": 450,
+            "estimated_kwh": 20.16
+          },
+          "recommended": {
+            "region": "us-west-2",
+            "gpu_count": 8,
+            "expected_duration_hours": 3,
+            "gpu_kwh_assumption": 0.7,
+            "gpu_kwh_assumption_source": "default",
+            "pue": 1.1,
+            "pue_source": "region",
+            "electricity_price_per_kwh": 0.09,
+            "carbon_intensity_g_per_kwh": 120,
+            "estimated_kwh": 18.48
+          },
+          "hard_savings_rule": "Hard savings count only valid automatic move_region recommendations with concrete current and recommended energy data."
+        }
+      },
+      {
+        "id": "batch-beta-044",
+        "customer_id": "beta",
+        "workload_type": "batch",
+        "gpu_type": "a100",
+        "gpu_count": 2,
+        "expected_duration_minutes": 90,
+        "expected_duration_hours": 1.5,
+        "current_region": "us-central-1",
+        "recommended_region": "us-west-2",
+        "recommendation_type": "move_region",
+        "recommendation": "move_region",
+        "baseline_cost_usd": 0.2898,
+        "recommended_cost_usd": 0.2079,
+        "hard_savings_usd": 0.0819,
+        "estimated_savings_usd": 0.0819,
+        "baseline_carbon_g": 531.3,
+        "recommended_carbon_g": 277.2,
+        "carbon_delta_g": -254.1,
+        "delay_minutes": 0,
+        "confidence": "high",
+        "reason": "Moved from us-central-1 to us-west-2 because estimated energy cost and carbon are lower and policy allows it.",
+        "blocked_reasons": [
+          "region_policy"
+        ],
+        "could_not_move_reasons": [
+          "Cannot move because policy blocks the available target regions."
+        ],
+        "counted_in_savings": true,
+        "valid": true,
+        "priority": "low",
+        "latency_sensitive": false,
+        "validation_errors": [],
+        "capacity_checked": true,
+        "capacity_reserved": 2,
+        "remaining_region_capacity_after_assignment": 6,
+        "capacity_reason": null,
+        "assumptions": {
+          "baseline": {
+            "region": "us-central-1",
+            "gpu_count": 2,
+            "expected_duration_hours": 1.5,
+            "gpu_kwh_assumption": 0.7,
+            "gpu_kwh_assumption_source": "default",
+            "pue": 1.15,
+            "pue_source": "region",
+            "electricity_price_per_kwh": 0.12,
+            "carbon_intensity_g_per_kwh": 220,
+            "estimated_kwh": 2.415
+          },
+          "recommended": {
+            "region": "us-west-2",
+            "gpu_count": 2,
+            "expected_duration_hours": 1.5,
+            "gpu_kwh_assumption": 0.7,
+            "gpu_kwh_assumption_source": "default",
+            "pue": 1.1,
+            "pue_source": "region",
+            "electricity_price_per_kwh": 0.09,
+            "carbon_intensity_g_per_kwh": 120,
+            "estimated_kwh": 2.31
+          },
+          "hard_savings_rule": "Hard savings count only valid automatic move_region recommendations with concrete current and recommended energy data."
+        }
+      }
+    ],
+    "workloads_excluded_from_savings": [
+      {
+        "id": "serve-alpha-017",
+        "customer_id": "alpha",
+        "workload_type": "inference",
+        "gpu_type": "l40",
+        "gpu_count": 4,
+        "expected_duration_minutes": 60,
+        "expected_duration_hours": 1,
+        "current_region": "us-east-1",
+        "recommended_region": "us-east-1",
+        "recommendation_type": "run_now",
+        "recommendation": "run_now",
+        "baseline_cost_usd": 0.6048,
+        "recommended_cost_usd": 0.6048,
+        "hard_savings_usd": 0,
+        "estimated_savings_usd": 0,
+        "baseline_carbon_g": 1512,
+        "recommended_carbon_g": 1512,
+        "carbon_delta_g": 0,
+        "delay_minutes": 0,
+        "confidence": "high",
+        "reason": "Run now in us-east-1; no approved move improves estimated cost, carbon, capacity, and policy enough. Cannot delay because deadline would be missed. latency policy prevents approved moves above the workload limit.",
+        "blocked_reasons": [
+          "latency",
+          "region_policy"
+        ],
+        "could_not_move_reasons": [
+          "Cannot move because latency policy would be exceeded.",
+          "Cannot move because policy blocks the available target regions."
+        ],
+        "counted_in_savings": false,
+        "valid": true,
+        "priority": "critical",
+        "latency_sensitive": true,
+        "validation_errors": [],
+        "capacity_checked": true,
+        "capacity_reserved": 4,
+        "remaining_region_capacity_after_assignment": 20,
+        "capacity_reason": null,
+        "assumptions": {
+          "baseline": {
+            "region": "us-east-1",
+            "gpu_count": 4,
+            "expected_duration_hours": 1,
+            "gpu_kwh_assumption": 0.7,
+            "gpu_kwh_assumption_source": "default",
+            "pue": 1.2,
+            "pue_source": "region",
+            "electricity_price_per_kwh": 0.18,
+            "carbon_intensity_g_per_kwh": 450,
+            "estimated_kwh": 3.36
+          },
+          "recommended": {
+            "region": "us-east-1",
+            "gpu_count": 4,
+            "expected_duration_hours": 1,
+            "gpu_kwh_assumption": 0.7,
+            "gpu_kwh_assumption_source": "default",
+            "pue": 1.2,
+            "pue_source": "region",
+            "electricity_price_per_kwh": 0.18,
+            "carbon_intensity_g_per_kwh": 450,
+            "estimated_kwh": 3.36
+          },
+          "hard_savings_rule": "Hard savings count only valid automatic move_region recommendations with concrete current and recommended energy data."
+        }
+      },
+      {
+        "id": "finetune-gamma-021",
+        "customer_id": "gamma",
+        "workload_type": "training",
+        "gpu_type": "h100",
+        "gpu_count": 4,
+        "expected_duration_minutes": 120,
+        "expected_duration_hours": 2,
+        "current_region": "eu-west-1",
+        "recommended_region": "eu-west-1",
+        "recommendation_type": "pinned",
+        "recommendation": "pinned",
+        "baseline_cost_usd": 1.0573,
+        "recommended_cost_usd": 1.0573,
+        "hard_savings_usd": 0,
+        "estimated_savings_usd": 0,
+        "baseline_carbon_g": 594.72,
+        "recommended_carbon_g": 594.72,
+        "carbon_delta_g": 0,
+        "delay_minutes": 0,
+        "confidence": "high",
+        "reason": "Pinned because data residency pins it to eu-west-1.",
+        "blocked_reasons": [
+          "data_residency",
+          "region_policy"
+        ],
+        "could_not_move_reasons": [
+          "Cannot move because data residency pins this workload to eu-west-1.",
+          "Cannot move because policy blocks the available target regions.",
+          "Pinned because data residency pins it to eu-west-1."
+        ],
+        "counted_in_savings": false,
+        "valid": true,
+        "priority": "high",
+        "latency_sensitive": false,
+        "validation_errors": [],
+        "capacity_checked": true,
+        "capacity_reserved": 4,
+        "remaining_region_capacity_after_assignment": 4,
+        "capacity_reason": null,
+        "assumptions": {
+          "baseline": {
+            "region": "eu-west-1",
+            "gpu_count": 4,
+            "expected_duration_hours": 2,
+            "gpu_kwh_assumption": 0.7,
+            "gpu_kwh_assumption_source": "default",
+            "pue": 1.18,
+            "pue_source": "region",
+            "electricity_price_per_kwh": 0.16,
+            "carbon_intensity_g_per_kwh": 90,
+            "estimated_kwh": 6.608
+          },
+          "recommended": {
+            "region": "eu-west-1",
+            "gpu_count": 4,
+            "expected_duration_hours": 2,
+            "gpu_kwh_assumption": 0.7,
+            "gpu_kwh_assumption_source": "default",
+            "pue": 1.18,
+            "pue_source": "region",
+            "electricity_price_per_kwh": 0.16,
+            "carbon_intensity_g_per_kwh": 90,
+            "estimated_kwh": 6.608
+          },
+          "hard_savings_rule": "Hard savings count only valid automatic move_region recommendations with concrete current and recommended energy data."
+        }
+      }
+    ]
+  },
+  "aggregate_report_summary": {
+    "total_workloads": 4,
+    "valid_workloads": 4,
+    "invalid_workloads": 0,
+    "run_now_count": 1,
+    "move_region_count": 2,
+    "delay_count": 0,
+    "manual_review_count": 0,
+    "pinned_count": 1,
+    "movable_count": 3,
+    "movable_percent": 75,
+    "pinned_percent": 25,
+    "baseline_cost_usd": 5.5807,
+    "recommended_cost_usd": 3.5332,
+    "hard_savings_usd": 2.0475,
+    "hard_savings_percent": 52.2508,
+    "estimated_savings_usd": 2.0475,
+    "estimated_savings_percent": 52.2508,
+    "total_baseline_cost_usd": 5.5807,
+    "total_recommended_cost_usd": 3.5332,
+    "baseline_carbon_g": 11710.02,
+    "recommended_carbon_g": 4601.52,
+    "total_baseline_carbon_g": 11710.02,
+    "total_recommended_carbon_g": 4601.52,
+    "carbon_delta_g": -7108.5,
+    "carbon_delta_percent": -74.0214,
+    "average_confidence": 1,
+    "policy_violation_count": 4,
+    "capacity_blocked_count": 1,
+    "latency_blocked_count": 1,
+    "data_residency_blocked_count": 1
+  },
+  "recommendations": [
+    {
+      "id": "serve-alpha-017",
+      "customer_id": "alpha",
+      "workload_type": "inference",
+      "gpu_type": "l40",
+      "gpu_count": 4,
+      "expected_duration_minutes": 60,
+      "expected_duration_hours": 1,
+      "current_region": "us-east-1",
+      "recommended_region": "us-east-1",
+      "recommendation_type": "run_now",
+      "recommendation": "run_now",
+      "baseline_cost_usd": 0.6048,
+      "recommended_cost_usd": 0.6048,
+      "hard_savings_usd": 0,
+      "estimated_savings_usd": 0,
+      "baseline_carbon_g": 1512,
+      "recommended_carbon_g": 1512,
+      "carbon_delta_g": 0,
+      "delay_minutes": 0,
+      "confidence": "high",
+      "reason": "Run now in us-east-1; no approved move improves estimated cost, carbon, capacity, and policy enough. Cannot delay because deadline would be missed. latency policy prevents approved moves above the workload limit.",
+      "blocked_reasons": [
+        "latency",
+        "region_policy"
+      ],
+      "could_not_move_reasons": [
+        "Cannot move because latency policy would be exceeded.",
+        "Cannot move because policy blocks the available target regions."
+      ],
+      "counted_in_savings": false,
+      "valid": true,
+      "priority": "critical",
+      "latency_sensitive": true,
+      "validation_errors": [],
+      "capacity_checked": true,
+      "capacity_reserved": 4,
+      "remaining_region_capacity_after_assignment": 20,
+      "capacity_reason": null,
+      "assumptions": {
+        "baseline": {
+          "region": "us-east-1",
+          "gpu_count": 4,
+          "expected_duration_hours": 1,
+          "gpu_kwh_assumption": 0.7,
+          "gpu_kwh_assumption_source": "default",
+          "pue": 1.2,
+          "pue_source": "region",
+          "electricity_price_per_kwh": 0.18,
+          "carbon_intensity_g_per_kwh": 450,
+          "estimated_kwh": 3.36
+        },
+        "recommended": {
+          "region": "us-east-1",
+          "gpu_count": 4,
+          "expected_duration_hours": 1,
+          "gpu_kwh_assumption": 0.7,
+          "gpu_kwh_assumption_source": "default",
+          "pue": 1.2,
+          "pue_source": "region",
+          "electricity_price_per_kwh": 0.18,
+          "carbon_intensity_g_per_kwh": 450,
+          "estimated_kwh": 3.36
+        },
+        "hard_savings_rule": "Hard savings count only valid automatic move_region recommendations with concrete current and recommended energy data."
+      }
+    },
+    {
+      "id": "finetune-gamma-021",
+      "customer_id": "gamma",
+      "workload_type": "training",
+      "gpu_type": "h100",
+      "gpu_count": 4,
+      "expected_duration_minutes": 120,
+      "expected_duration_hours": 2,
+      "current_region": "eu-west-1",
+      "recommended_region": "eu-west-1",
+      "recommendation_type": "pinned",
+      "recommendation": "pinned",
+      "baseline_cost_usd": 1.0573,
+      "recommended_cost_usd": 1.0573,
+      "hard_savings_usd": 0,
+      "estimated_savings_usd": 0,
+      "baseline_carbon_g": 594.72,
+      "recommended_carbon_g": 594.72,
+      "carbon_delta_g": 0,
+      "delay_minutes": 0,
+      "confidence": "high",
+      "reason": "Pinned because data residency pins it to eu-west-1.",
+      "blocked_reasons": [
+        "data_residency",
+        "region_policy"
+      ],
+      "could_not_move_reasons": [
+        "Cannot move because data residency pins this workload to eu-west-1.",
+        "Cannot move because policy blocks the available target regions.",
+        "Pinned because data residency pins it to eu-west-1."
+      ],
+      "counted_in_savings": false,
+      "valid": true,
+      "priority": "high",
+      "latency_sensitive": false,
+      "validation_errors": [],
+      "capacity_checked": true,
+      "capacity_reserved": 4,
+      "remaining_region_capacity_after_assignment": 4,
+      "capacity_reason": null,
+      "assumptions": {
+        "baseline": {
+          "region": "eu-west-1",
+          "gpu_count": 4,
+          "expected_duration_hours": 2,
+          "gpu_kwh_assumption": 0.7,
+          "gpu_kwh_assumption_source": "default",
+          "pue": 1.18,
+          "pue_source": "region",
+          "electricity_price_per_kwh": 0.16,
+          "carbon_intensity_g_per_kwh": 90,
+          "estimated_kwh": 6.608
+        },
+        "recommended": {
+          "region": "eu-west-1",
+          "gpu_count": 4,
+          "expected_duration_hours": 2,
+          "gpu_kwh_assumption": 0.7,
+          "gpu_kwh_assumption_source": "default",
+          "pue": 1.18,
+          "pue_source": "region",
+          "electricity_price_per_kwh": 0.16,
+          "carbon_intensity_g_per_kwh": 90,
+          "estimated_kwh": 6.608
+        },
+        "hard_savings_rule": "Hard savings count only valid automatic move_region recommendations with concrete current and recommended energy data."
+      }
+    },
+    {
+      "id": "train-alpha-001",
+      "customer_id": "alpha",
+      "workload_type": "training",
+      "gpu_type": "h100",
+      "gpu_count": 8,
+      "expected_duration_minutes": 180,
+      "expected_duration_hours": 3,
+      "current_region": "us-east-1",
+      "recommended_region": "us-west-2",
+      "recommendation_type": "move_region",
+      "recommendation": "move_region",
+      "baseline_cost_usd": 3.6288,
+      "recommended_cost_usd": 1.6632,
+      "hard_savings_usd": 1.9656,
+      "estimated_savings_usd": 1.9656,
+      "baseline_carbon_g": 9072,
+      "recommended_carbon_g": 2217.6,
+      "carbon_delta_g": -6854.4,
+      "delay_minutes": 0,
+      "confidence": "high",
+      "reason": "Moved from us-east-1 to us-west-2 because estimated energy cost and carbon are lower and policy allows it.",
+      "blocked_reasons": [
+        "capacity",
+        "region_policy"
+      ],
+      "could_not_move_reasons": [
+        "Cannot move because policy blocks the available target regions."
+      ],
+      "counted_in_savings": true,
+      "valid": true,
+      "priority": "normal",
+      "latency_sensitive": false,
+      "validation_errors": [],
+      "capacity_checked": true,
+      "capacity_reserved": 8,
+      "remaining_region_capacity_after_assignment": 8,
+      "capacity_reason": null,
+      "assumptions": {
+        "baseline": {
+          "region": "us-east-1",
+          "gpu_count": 8,
+          "expected_duration_hours": 3,
+          "gpu_kwh_assumption": 0.7,
+          "gpu_kwh_assumption_source": "default",
+          "pue": 1.2,
+          "pue_source": "region",
+          "electricity_price_per_kwh": 0.18,
+          "carbon_intensity_g_per_kwh": 450,
+          "estimated_kwh": 20.16
+        },
+        "recommended": {
+          "region": "us-west-2",
+          "gpu_count": 8,
+          "expected_duration_hours": 3,
+          "gpu_kwh_assumption": 0.7,
+          "gpu_kwh_assumption_source": "default",
+          "pue": 1.1,
+          "pue_source": "region",
+          "electricity_price_per_kwh": 0.09,
+          "carbon_intensity_g_per_kwh": 120,
+          "estimated_kwh": 18.48
+        },
+        "hard_savings_rule": "Hard savings count only valid automatic move_region recommendations with concrete current and recommended energy data."
+      }
+    },
+    {
+      "id": "batch-beta-044",
+      "customer_id": "beta",
+      "workload_type": "batch",
+      "gpu_type": "a100",
+      "gpu_count": 2,
+      "expected_duration_minutes": 90,
+      "expected_duration_hours": 1.5,
+      "current_region": "us-central-1",
+      "recommended_region": "us-west-2",
+      "recommendation_type": "move_region",
+      "recommendation": "move_region",
+      "baseline_cost_usd": 0.2898,
+      "recommended_cost_usd": 0.2079,
+      "hard_savings_usd": 0.0819,
+      "estimated_savings_usd": 0.0819,
+      "baseline_carbon_g": 531.3,
+      "recommended_carbon_g": 277.2,
+      "carbon_delta_g": -254.1,
+      "delay_minutes": 0,
+      "confidence": "high",
+      "reason": "Moved from us-central-1 to us-west-2 because estimated energy cost and carbon are lower and policy allows it.",
+      "blocked_reasons": [
+        "region_policy"
+      ],
+      "could_not_move_reasons": [
+        "Cannot move because policy blocks the available target regions."
+      ],
+      "counted_in_savings": true,
+      "valid": true,
+      "priority": "low",
+      "latency_sensitive": false,
+      "validation_errors": [],
+      "capacity_checked": true,
+      "capacity_reserved": 2,
+      "remaining_region_capacity_after_assignment": 6,
+      "capacity_reason": null,
+      "assumptions": {
+        "baseline": {
+          "region": "us-central-1",
+          "gpu_count": 2,
+          "expected_duration_hours": 1.5,
+          "gpu_kwh_assumption": 0.7,
+          "gpu_kwh_assumption_source": "default",
+          "pue": 1.15,
+          "pue_source": "region",
+          "electricity_price_per_kwh": 0.12,
+          "carbon_intensity_g_per_kwh": 220,
+          "estimated_kwh": 2.415
+        },
+        "recommended": {
+          "region": "us-west-2",
+          "gpu_count": 2,
+          "expected_duration_hours": 1.5,
+          "gpu_kwh_assumption": 0.7,
+          "gpu_kwh_assumption_source": "default",
+          "pue": 1.1,
+          "pue_source": "region",
+          "electricity_price_per_kwh": 0.09,
+          "carbon_intensity_g_per_kwh": 120,
+          "estimated_kwh": 2.31
+        },
+        "hard_savings_rule": "Hard savings count only valid automatic move_region recommendations with concrete current and recommended energy data."
+      }
+    }
+  ],
+  "rows": [
+    {
+      "id": "serve-alpha-017",
+      "customer_id": "alpha",
+      "workload_type": "inference",
+      "gpu_type": "l40",
+      "gpu_count": 4,
+      "expected_duration_minutes": 60,
+      "expected_duration_hours": 1,
+      "current_region": "us-east-1",
+      "recommended_region": "us-east-1",
+      "recommendation_type": "run_now",
+      "recommendation": "run_now",
+      "baseline_cost_usd": 0.6048,
+      "recommended_cost_usd": 0.6048,
+      "hard_savings_usd": 0,
+      "estimated_savings_usd": 0,
+      "baseline_carbon_g": 1512,
+      "recommended_carbon_g": 1512,
+      "carbon_delta_g": 0,
+      "delay_minutes": 0,
+      "confidence": "high",
+      "reason": "Run now in us-east-1; no approved move improves estimated cost, carbon, capacity, and policy enough. Cannot delay because deadline would be missed. latency policy prevents approved moves above the workload limit.",
+      "blocked_reasons": [
+        "latency",
+        "region_policy"
+      ],
+      "could_not_move_reasons": [
+        "Cannot move because latency policy would be exceeded.",
+        "Cannot move because policy blocks the available target regions."
+      ],
+      "counted_in_savings": false,
+      "valid": true,
+      "priority": "critical",
+      "latency_sensitive": true,
+      "validation_errors": [],
+      "capacity_checked": true,
+      "capacity_reserved": 4,
+      "remaining_region_capacity_after_assignment": 20,
+      "capacity_reason": null,
+      "assumptions": {
+        "baseline": {
+          "region": "us-east-1",
+          "gpu_count": 4,
+          "expected_duration_hours": 1,
+          "gpu_kwh_assumption": 0.7,
+          "gpu_kwh_assumption_source": "default",
+          "pue": 1.2,
+          "pue_source": "region",
+          "electricity_price_per_kwh": 0.18,
+          "carbon_intensity_g_per_kwh": 450,
+          "estimated_kwh": 3.36
+        },
+        "recommended": {
+          "region": "us-east-1",
+          "gpu_count": 4,
+          "expected_duration_hours": 1,
+          "gpu_kwh_assumption": 0.7,
+          "gpu_kwh_assumption_source": "default",
+          "pue": 1.2,
+          "pue_source": "region",
+          "electricity_price_per_kwh": 0.18,
+          "carbon_intensity_g_per_kwh": 450,
+          "estimated_kwh": 3.36
+        },
+        "hard_savings_rule": "Hard savings count only valid automatic move_region recommendations with concrete current and recommended energy data."
+      }
+    },
+    {
+      "id": "finetune-gamma-021",
+      "customer_id": "gamma",
+      "workload_type": "training",
+      "gpu_type": "h100",
+      "gpu_count": 4,
+      "expected_duration_minutes": 120,
+      "expected_duration_hours": 2,
+      "current_region": "eu-west-1",
+      "recommended_region": "eu-west-1",
+      "recommendation_type": "pinned",
+      "recommendation": "pinned",
+      "baseline_cost_usd": 1.0573,
+      "recommended_cost_usd": 1.0573,
+      "hard_savings_usd": 0,
+      "estimated_savings_usd": 0,
+      "baseline_carbon_g": 594.72,
+      "recommended_carbon_g": 594.72,
+      "carbon_delta_g": 0,
+      "delay_minutes": 0,
+      "confidence": "high",
+      "reason": "Pinned because data residency pins it to eu-west-1.",
+      "blocked_reasons": [
+        "data_residency",
+        "region_policy"
+      ],
+      "could_not_move_reasons": [
+        "Cannot move because data residency pins this workload to eu-west-1.",
+        "Cannot move because policy blocks the available target regions.",
+        "Pinned because data residency pins it to eu-west-1."
+      ],
+      "counted_in_savings": false,
+      "valid": true,
+      "priority": "high",
+      "latency_sensitive": false,
+      "validation_errors": [],
+      "capacity_checked": true,
+      "capacity_reserved": 4,
+      "remaining_region_capacity_after_assignment": 4,
+      "capacity_reason": null,
+      "assumptions": {
+        "baseline": {
+          "region": "eu-west-1",
+          "gpu_count": 4,
+          "expected_duration_hours": 2,
+          "gpu_kwh_assumption": 0.7,
+          "gpu_kwh_assumption_source": "default",
+          "pue": 1.18,
+          "pue_source": "region",
+          "electricity_price_per_kwh": 0.16,
+          "carbon_intensity_g_per_kwh": 90,
+          "estimated_kwh": 6.608
+        },
+        "recommended": {
+          "region": "eu-west-1",
+          "gpu_count": 4,
+          "expected_duration_hours": 2,
+          "gpu_kwh_assumption": 0.7,
+          "gpu_kwh_assumption_source": "default",
+          "pue": 1.18,
+          "pue_source": "region",
+          "electricity_price_per_kwh": 0.16,
+          "carbon_intensity_g_per_kwh": 90,
+          "estimated_kwh": 6.608
+        },
+        "hard_savings_rule": "Hard savings count only valid automatic move_region recommendations with concrete current and recommended energy data."
+      }
+    },
+    {
+      "id": "train-alpha-001",
+      "customer_id": "alpha",
+      "workload_type": "training",
+      "gpu_type": "h100",
+      "gpu_count": 8,
+      "expected_duration_minutes": 180,
+      "expected_duration_hours": 3,
+      "current_region": "us-east-1",
+      "recommended_region": "us-west-2",
+      "recommendation_type": "move_region",
+      "recommendation": "move_region",
+      "baseline_cost_usd": 3.6288,
+      "recommended_cost_usd": 1.6632,
+      "hard_savings_usd": 1.9656,
+      "estimated_savings_usd": 1.9656,
+      "baseline_carbon_g": 9072,
+      "recommended_carbon_g": 2217.6,
+      "carbon_delta_g": -6854.4,
+      "delay_minutes": 0,
+      "confidence": "high",
+      "reason": "Moved from us-east-1 to us-west-2 because estimated energy cost and carbon are lower and policy allows it.",
+      "blocked_reasons": [
+        "capacity",
+        "region_policy"
+      ],
+      "could_not_move_reasons": [
+        "Cannot move because policy blocks the available target regions."
+      ],
+      "counted_in_savings": true,
+      "valid": true,
+      "priority": "normal",
+      "latency_sensitive": false,
+      "validation_errors": [],
+      "capacity_checked": true,
+      "capacity_reserved": 8,
+      "remaining_region_capacity_after_assignment": 8,
+      "capacity_reason": null,
+      "assumptions": {
+        "baseline": {
+          "region": "us-east-1",
+          "gpu_count": 8,
+          "expected_duration_hours": 3,
+          "gpu_kwh_assumption": 0.7,
+          "gpu_kwh_assumption_source": "default",
+          "pue": 1.2,
+          "pue_source": "region",
+          "electricity_price_per_kwh": 0.18,
+          "carbon_intensity_g_per_kwh": 450,
+          "estimated_kwh": 20.16
+        },
+        "recommended": {
+          "region": "us-west-2",
+          "gpu_count": 8,
+          "expected_duration_hours": 3,
+          "gpu_kwh_assumption": 0.7,
+          "gpu_kwh_assumption_source": "default",
+          "pue": 1.1,
+          "pue_source": "region",
+          "electricity_price_per_kwh": 0.09,
+          "carbon_intensity_g_per_kwh": 120,
+          "estimated_kwh": 18.48
+        },
+        "hard_savings_rule": "Hard savings count only valid automatic move_region recommendations with concrete current and recommended energy data."
+      }
+    },
+    {
+      "id": "batch-beta-044",
+      "customer_id": "beta",
+      "workload_type": "batch",
+      "gpu_type": "a100",
+      "gpu_count": 2,
+      "expected_duration_minutes": 90,
+      "expected_duration_hours": 1.5,
+      "current_region": "us-central-1",
+      "recommended_region": "us-west-2",
+      "recommendation_type": "move_region",
+      "recommendation": "move_region",
+      "baseline_cost_usd": 0.2898,
+      "recommended_cost_usd": 0.2079,
+      "hard_savings_usd": 0.0819,
+      "estimated_savings_usd": 0.0819,
+      "baseline_carbon_g": 531.3,
+      "recommended_carbon_g": 277.2,
+      "carbon_delta_g": -254.1,
+      "delay_minutes": 0,
+      "confidence": "high",
+      "reason": "Moved from us-central-1 to us-west-2 because estimated energy cost and carbon are lower and policy allows it.",
+      "blocked_reasons": [
+        "region_policy"
+      ],
+      "could_not_move_reasons": [
+        "Cannot move because policy blocks the available target regions."
+      ],
+      "counted_in_savings": true,
+      "valid": true,
+      "priority": "low",
+      "latency_sensitive": false,
+      "validation_errors": [],
+      "capacity_checked": true,
+      "capacity_reserved": 2,
+      "remaining_region_capacity_after_assignment": 6,
+      "capacity_reason": null,
+      "assumptions": {
+        "baseline": {
+          "region": "us-central-1",
+          "gpu_count": 2,
+          "expected_duration_hours": 1.5,
+          "gpu_kwh_assumption": 0.7,
+          "gpu_kwh_assumption_source": "default",
+          "pue": 1.15,
+          "pue_source": "region",
+          "electricity_price_per_kwh": 0.12,
+          "carbon_intensity_g_per_kwh": 220,
+          "estimated_kwh": 2.415
+        },
+        "recommended": {
+          "region": "us-west-2",
+          "gpu_count": 2,
+          "expected_duration_hours": 1.5,
+          "gpu_kwh_assumption": 0.7,
+          "gpu_kwh_assumption_source": "default",
+          "pue": 1.1,
+          "pue_source": "region",
+          "electricity_price_per_kwh": 0.09,
+          "carbon_intensity_g_per_kwh": 120,
+          "estimated_kwh": 2.31
+        },
+        "hard_savings_rule": "Hard savings count only valid automatic move_region recommendations with concrete current and recommended energy data."
+      }
+    }
+  ],
+  "validation_errors": [],
+  "pilot_recommendation": {
+    "recommended": true,
+    "recommended_workload_types": [
+      "training"
+    ],
+    "recommended_regions": [
+      "us-west-2"
+    ],
+    "excluded_workload_types": [
+      "inference"
+    ],
+    "excluded_priority_levels": [
+      "critical"
+    ],
+    "suggested_pilot_duration": "2 weeks in shadow mode",
+    "suggested_success_metric": "15% estimated cost reduction on movable workloads with no SLA impact.",
+    "reason": "training has the strongest counted savings among non-critical, non-latency-sensitive movable workloads.",
+    "risks_to_watch": [
+      "Validate against actual billing.",
+      "Watch SLA and latency impact.",
+      "Capacity reservation is batch-local, not live inventory."
+    ]
+  },
+  "diagnostic": {
+    "generated_at": "2026-05-31T02:36:39.662Z",
+    "executive_summary": "Based on uploaded data, Blackout found 2 move recommendations and $2.05 in expected estimated savings. This requires validation against actual billing.",
+    "workload_flexibility_summary": "75% of valid workloads appear movable. 25% are pinned by workload or residency constraints.",
+    "estimated_savings_range": {
+      "low_usd": 1.02,
+      "expected_usd": 2.05,
+      "high_usd": 2.56,
+      "note": "rough planning range, not billing truth. Validate against actual billing before using it for commitments."
+    },
+    "estimated_carbon_impact": "-7,108.5 g estimated carbon delta based on uploaded region data.",
+    "top_blockers": [
+      {
+        "reason": "Cannot move because policy blocks the available target regions.",
+        "count": 2
+      },
+      {
+        "reason": "Cannot move because data residency pins this workload to eu-west-1.",
+        "count": 1
+      },
+      {
+        "reason": "Cannot move because latency policy would be exceeded.",
+        "count": 1
+      },
+      {
+        "reason": "Pinned because data residency pins it to eu-west-1.",
+        "count": 1
+      }
+    ],
+    "top_movable_workload_types": [
+      {
+        "key": "training",
+        "workload_count": 2,
+        "baseline_cost_usd": 3.6288,
+        "recommended_cost_usd": 1.6632,
+        "hard_savings_usd": 1.9656,
+        "baseline_carbon_g": 9072,
+        "recommended_carbon_g": 2217.6,
+        "carbon_delta_g": -6854.4
+      },
+      {
+        "key": "batch",
+        "workload_count": 1,
+        "baseline_cost_usd": 0.2898,
+        "recommended_cost_usd": 0.2079,
+        "hard_savings_usd": 0.0819,
+        "baseline_carbon_g": 531.3,
+        "recommended_carbon_g": 277.2,
+        "carbon_delta_g": -254.1
+      }
+    ],
+    "top_pinned_workload_types": [
+      {
+        "workload_type": "training",
+        "count": 1
+      }
+    ],
+    "top_opportunities": [
+      {
+        "id": "train-alpha-001",
+        "customer_id": "alpha",
+        "workload_type": "training",
+        "gpu_type": "h100",
+        "gpu_count": 8,
+        "expected_duration_minutes": 180,
+        "expected_duration_hours": 3,
+        "current_region": "us-east-1",
+        "recommended_region": "us-west-2",
+        "recommendation_type": "move_region",
+        "recommendation": "move_region",
+        "baseline_cost_usd": 3.6288,
+        "recommended_cost_usd": 1.6632,
+        "hard_savings_usd": 1.9656,
+        "estimated_savings_usd": 1.9656,
+        "baseline_carbon_g": 9072,
+        "recommended_carbon_g": 2217.6,
+        "carbon_delta_g": -6854.4,
+        "delay_minutes": 0,
+        "confidence": "high",
+        "reason": "Moved from us-east-1 to us-west-2 because estimated energy cost and carbon are lower and policy allows it.",
+        "blocked_reasons": [
+          "capacity",
+          "region_policy"
+        ],
+        "could_not_move_reasons": [
+          "Cannot move because policy blocks the available target regions."
+        ],
+        "counted_in_savings": true,
+        "valid": true,
+        "priority": "normal",
+        "latency_sensitive": false,
+        "validation_errors": [],
+        "capacity_checked": true,
+        "capacity_reserved": 8,
+        "remaining_region_capacity_after_assignment": 8,
+        "capacity_reason": null,
+        "assumptions": {
+          "baseline": {
+            "region": "us-east-1",
+            "gpu_count": 8,
+            "expected_duration_hours": 3,
+            "gpu_kwh_assumption": 0.7,
+            "gpu_kwh_assumption_source": "default",
+            "pue": 1.2,
+            "pue_source": "region",
+            "electricity_price_per_kwh": 0.18,
+            "carbon_intensity_g_per_kwh": 450,
+            "estimated_kwh": 20.16
+          },
+          "recommended": {
+            "region": "us-west-2",
+            "gpu_count": 8,
+            "expected_duration_hours": 3,
+            "gpu_kwh_assumption": 0.7,
+            "gpu_kwh_assumption_source": "default",
+            "pue": 1.1,
+            "pue_source": "region",
+            "electricity_price_per_kwh": 0.09,
+            "carbon_intensity_g_per_kwh": 120,
+            "estimated_kwh": 18.48
+          },
+          "hard_savings_rule": "Hard savings count only valid automatic move_region recommendations with concrete current and recommended energy data."
+        }
+      },
+      {
+        "id": "batch-beta-044",
+        "customer_id": "beta",
+        "workload_type": "batch",
+        "gpu_type": "a100",
+        "gpu_count": 2,
+        "expected_duration_minutes": 90,
+        "expected_duration_hours": 1.5,
+        "current_region": "us-central-1",
+        "recommended_region": "us-west-2",
+        "recommendation_type": "move_region",
+        "recommendation": "move_region",
+        "baseline_cost_usd": 0.2898,
+        "recommended_cost_usd": 0.2079,
+        "hard_savings_usd": 0.0819,
+        "estimated_savings_usd": 0.0819,
+        "baseline_carbon_g": 531.3,
+        "recommended_carbon_g": 277.2,
+        "carbon_delta_g": -254.1,
+        "delay_minutes": 0,
+        "confidence": "high",
+        "reason": "Moved from us-central-1 to us-west-2 because estimated energy cost and carbon are lower and policy allows it.",
+        "blocked_reasons": [
+          "region_policy"
+        ],
+        "could_not_move_reasons": [
+          "Cannot move because policy blocks the available target regions."
+        ],
+        "counted_in_savings": true,
+        "valid": true,
+        "priority": "low",
+        "latency_sensitive": false,
+        "validation_errors": [],
+        "capacity_checked": true,
+        "capacity_reserved": 2,
+        "remaining_region_capacity_after_assignment": 6,
+        "capacity_reason": null,
+        "assumptions": {
+          "baseline": {
+            "region": "us-central-1",
+            "gpu_count": 2,
+            "expected_duration_hours": 1.5,
+            "gpu_kwh_assumption": 0.7,
+            "gpu_kwh_assumption_source": "default",
+            "pue": 1.15,
+            "pue_source": "region",
+            "electricity_price_per_kwh": 0.12,
+            "carbon_intensity_g_per_kwh": 220,
+            "estimated_kwh": 2.415
+          },
+          "recommended": {
+            "region": "us-west-2",
+            "gpu_count": 2,
+            "expected_duration_hours": 1.5,
+            "gpu_kwh_assumption": 0.7,
+            "gpu_kwh_assumption_source": "default",
+            "pue": 1.1,
+            "pue_source": "region",
+            "electricity_price_per_kwh": 0.09,
+            "carbon_intensity_g_per_kwh": 120,
+            "estimated_kwh": 2.31
+          },
+          "hard_savings_rule": "Hard savings count only valid automatic move_region recommendations with concrete current and recommended energy data."
+        }
+      }
+    ],
+    "policy_constraints_applied": [
+      "Max delay: 90 minutes.",
+      "Allowed regions: us-east-1, us-west-2, us-central-1, eu-west-1.",
+      "Blocked regions: none.",
+      "Carbon ceiling: not set.",
+      "Max latency: not set.",
+      "Low-confidence moves require manual review."
+    ],
+    "assumptions_used": [
+      "GPU energy assumption: 0.7 kWh per GPU-hour (default).",
+      "Default PUE: 1.2; uploaded region PUE is used when present.",
+      "estimated_kwh = gpu_count * expected_duration_hours * gpu_kwh_assumption * pue; cost_usd = estimated_kwh * electricity_price_per_kwh",
+      "carbon_g = estimated_kwh * carbon_intensity_g_per_kwh",
+      "Delay savings are not counted unless future forecast data is provided."
+    ],
+    "data_quality": {
+      "score": "high",
+      "numeric_score": 92,
+      "reasons": [
+        "Uploaded data is strong enough for a focused pilot discussion."
+      ],
+      "warnings": [
+        "No blocked regions configured.",
+        "Carbon ceiling is missing.",
+        "Max latency policy is missing."
+      ]
+    },
+    "not_counted_savings": [
+      {
+        "item": "Delay savings",
+        "reason": "Delay savings are not counted because forecast data was not provided."
+      },
+      {
+        "item": "Demand response revenue",
+        "reason": "Demand response revenue is not counted because no utility or market program data was uploaded."
+      },
+      {
+        "item": "Utility bill reconciliation",
+        "reason": "Utility bill reconciliation is not included."
+      },
+      {
+        "item": "Live cloud inventory",
+        "reason": "Live cloud inventory is not included."
+      },
+      {
+        "item": "Capacity reservation",
+        "reason": "Capacity is batch-local in this report, not a real reservation system."
+      },
+      {
+        "item": "Customer contract pricing",
+        "reason": "Customer contract pricing is not included unless reflected in uploaded energy prices."
+      },
+      {
+        "item": "Cooling estimates",
+        "reason": "Cooling estimates use uploaded PUE or the default PUE assumption."
+      }
+    ],
+    "recommended_pilot_scope": {
+      "recommended": true,
+      "recommended_workload_types": [
+        "training"
+      ],
+      "recommended_regions": [
+        "us-west-2"
+      ],
+      "excluded_workload_types": [
+        "inference"
+      ],
+      "excluded_priority_levels": [
+        "critical"
+      ],
+      "suggested_pilot_duration": "2 weeks in shadow mode",
+      "suggested_success_metric": "15% estimated cost reduction on movable workloads with no SLA impact.",
+      "reason": "training has the strongest counted savings among non-critical, non-latency-sensitive movable workloads.",
+      "risks_to_watch": [
+        "Validate against actual billing.",
+        "Watch SLA and latency impact.",
+        "Capacity reservation is batch-local, not live inventory."
+      ]
+    },
+    "recommended_next_step": "Start with training in us-west-2 for 2 weeks in shadow mode."
+  }
+}

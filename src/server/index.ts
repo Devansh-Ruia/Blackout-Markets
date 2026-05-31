@@ -5,7 +5,12 @@ import path from 'node:path';
 import { parseRegionCsv, parseWorkloadCsv } from '../domain/csv';
 import { invalidInputRecommendation, optimize } from '../domain/optimizer';
 import { defaultPolicy, readPolicy } from '../domain/policy';
-import { buildRetrospectiveReport, recommendationsToCsv, workloadReportRowsToCsv } from '../domain/report';
+import {
+  buildRetrospectiveReport,
+  diagnosticReportToMarkdown,
+  recommendationsToCsv,
+  workloadReportRowsToCsv
+} from '../domain/report';
 import type { Assumptions, OptimizationReport, RetrospectiveReport, ValidationError } from '../domain/types';
 import { validateDataset } from '../domain/validation';
 
@@ -203,6 +208,17 @@ app.post('/api/export/report/workloads.csv', (req, res) => {
       : [];
   res.header('Content-Type', 'text/csv');
   res.send(workloadReportRowsToCsv(rows));
+});
+
+app.post('/api/export/report/diagnostic.md', (req, res) => {
+  const report = (req.body?.report ?? req.body) as RetrospectiveReport | undefined;
+  if (!report?.diagnostic || !Array.isArray(report.rows)) {
+    res.status(400).send('Diagnostic report payload is required.');
+    return;
+  }
+
+  res.header('Content-Type', 'text/markdown');
+  res.send(diagnosticReportToMarkdown(report));
 });
 
 const staticDir = path.join(process.cwd(), 'dist-web');

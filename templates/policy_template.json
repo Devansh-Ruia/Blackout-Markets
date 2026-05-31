@@ -1,0 +1,8 @@
+{
+  "max_delay_minutes": 60,
+  "allowed_regions": [],
+  "blocked_regions": [],
+  "carbon_ceiling_g_per_kwh": null,
+  "max_latency_ms": null,
+  "require_manual_for_low_confidence": true
+}

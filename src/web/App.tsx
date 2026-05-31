@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { workloadReportRowsToCsv } from '../domain/report';
+import { diagnosticReportToMarkdown, workloadReportRowsToCsv } from '../domain/report';
 import { defaultPolicy } from '../domain/policy';
 import type {
   Confidence,
@@ -340,6 +340,80 @@ function Blockers({ report }: { report: RetrospectiveReport }) {
   );
 }
 
+function DiagnosticPanel({ report }: { report: RetrospectiveReport }) {
+  const pilot = report.pilot_recommendation;
+
+  return (
+    <section className="panel diagnostic-panel">
+      <div className="section-title">
+        <h2>Diagnostic report</h2>
+        <span>Estimated range, not billing truth.</span>
+      </div>
+      <div className="summary-grid diagnostic-grid">
+        <MetricCard
+          label="data quality"
+          value={`${report.data_quality.score} (${report.data_quality.numeric_score}/100)`}
+        />
+        <MetricCard label="low estimate" value={money(report.savings_range.low_usd)} />
+        <MetricCard label="expected estimate" value={money(report.savings_range.expected_usd)} />
+        <MetricCard label="high estimate" value={money(report.savings_range.high_usd)} />
+      </div>
+      <div className="two-column">
+        <div>
+          <h3>Data quality reasons</h3>
+          <ul className="bullet-list">
+            {report.data_quality.reasons.map((reason) => (
+              <li key={reason}>{reason}</li>
+            ))}
+            {report.data_quality.warnings.map((warning) => (
+              <li key={warning}>{warning}</li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h3>Best pilot candidate</h3>
+          {pilot.recommended ? (
+            <div className="pilot-box">
+              <strong>{pilot.recommended_workload_types.join(', ')}</strong>
+              <span>Regions: {pilot.recommended_regions.join(', ') || 'none selected'}</span>
+              <span>Duration: {pilot.suggested_pilot_duration}</span>
+              <span>Success metric: {pilot.suggested_success_metric}</span>
+              <span>Reason: {pilot.reason}</span>
+            </div>
+          ) : (
+            <div className="pilot-box">
+              <strong>No pilot recommended yet</strong>
+              <span>{pilot.reason}</span>
+              <span>{pilot.suggested_success_metric}</span>
+            </div>
+          )}
+        </div>
+      </div>
+      <div className="two-column diagnostic-lists">
+        <div>
+          <h3>Not counted in this report</h3>
+          <ul className="plain-list">
+            {report.not_counted_savings.map((item) => (
+              <li key={item.item}>
+                <strong>{item.item}</strong>
+                <span>{item.reason}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div>
+          <h3>Risks to watch</h3>
+          <ul className="bullet-list">
+            {pilot.risks_to_watch.map((risk) => (
+              <li key={risk}>{risk}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function TopOpportunities({ rows }: { rows: WorkloadReportRow[] }) {
   return (
     <section className="panel">
@@ -674,11 +748,19 @@ export function App() {
               >
                 Export workload report CSV
               </button>
+              <button
+                onClick={() =>
+                  download('blackout-diagnostic-report.md', diagnosticReportToMarkdown(report), 'text/markdown')
+                }
+              >
+                Export diagnostic
+              </button>
             </div>
           </div>
           <ValidationList report={report} />
           <div className="notice">This report is for decision support, not exact billing. Review recommendations before using them in production.</div>
           <ExecutiveSummary report={report} />
+          <DiagnosticPanel report={report} />
           <RecommendationMix report={report} />
           <PriorityBreakdown report={report} />
           <div className="breakdown-grid">

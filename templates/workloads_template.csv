@@ -1,0 +1,2 @@
+id,customer_id,workload_type,gpu_type,gpu_count,expected_duration_minutes,deadline_minutes_from_now,current_region,allowed_regions,priority,latency_sensitive,max_latency_ms,can_delay,can_move,checkpointable,data_residency_region,estimated_revenue_usd
+example-workload-001,hashed-customer-id,batch,h100,4,120,480,us-east-1,us-east-1|us-west-2,normal,false,,true,true,true,,

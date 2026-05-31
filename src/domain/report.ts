@@ -1,6 +1,7 @@
 import type { Recommendation, WorkloadReportRow } from './types';
 
 export { buildRetrospectiveReport } from './retrospective';
+export { buildSavingsRange, diagnosticReportToMarkdown } from './diagnostic';
 
 const recommendationFields: Array<keyof Recommendation> = [
   'workload_id',

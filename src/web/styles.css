@@ -322,6 +322,40 @@ select {
   grid-template-columns: 1fr;
 }
 
+.diagnostic-grid {
+  margin-bottom: 16px;
+}
+
+.diagnostic-lists {
+  margin-top: 16px;
+}
+
+.bullet-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.bullet-list li + li {
+  margin-top: 8px;
+}
+
+.pilot-box {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #f8faf7;
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.pilot-box strong {
+  color: var(--ink);
+}
+
+.pilot-box span {
+  overflow-wrap: anywhere;
+}
+
 .blocker-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-bottom: 16px;

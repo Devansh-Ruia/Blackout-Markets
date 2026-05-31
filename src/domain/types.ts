@@ -8,6 +8,7 @@ export type RecommendationType =
   | 'pinned'
   | 'invalid';
 export type Confidence = 'high' | 'medium' | 'low';
+export type DataQualityLevel = 'high' | 'medium' | 'low';
 
 export interface Workload {
   id: string;
@@ -163,6 +164,7 @@ export interface WorkloadReportRow {
   counted_in_savings: boolean;
   valid: boolean;
   priority: Priority;
+  latency_sensitive: boolean;
   validation_errors: string[];
   capacity_checked: boolean;
   capacity_reserved: number;
@@ -173,6 +175,55 @@ export interface WorkloadReportRow {
     recommended: EstimateAssumptions | null;
     hard_savings_rule: string;
   };
+}
+
+export interface SavingsRange {
+  low_usd: number;
+  expected_usd: number;
+  high_usd: number;
+  note: string;
+}
+
+export interface DataQuality {
+  score: DataQualityLevel;
+  numeric_score: number;
+  reasons: string[];
+  warnings: string[];
+}
+
+export interface NotCountedItem {
+  item: string;
+  reason: string;
+}
+
+export interface PilotRecommendation {
+  recommended: boolean;
+  recommended_workload_types: string[];
+  recommended_regions: string[];
+  excluded_workload_types: string[];
+  excluded_priority_levels: Priority[];
+  suggested_pilot_duration: string;
+  suggested_success_metric: string;
+  reason: string;
+  risks_to_watch: string[];
+}
+
+export interface DiagnosticReport {
+  generated_at: string;
+  executive_summary: string;
+  workload_flexibility_summary: string;
+  estimated_savings_range: SavingsRange;
+  estimated_carbon_impact: string;
+  top_blockers: Array<{ reason: string; count: number }>;
+  top_movable_workload_types: SavingsBreakdownRow[];
+  top_pinned_workload_types: Array<{ workload_type: string; count: number }>;
+  top_opportunities: WorkloadReportRow[];
+  policy_constraints_applied: string[];
+  assumptions_used: string[];
+  data_quality: DataQuality;
+  not_counted_savings: NotCountedItem[];
+  recommended_pilot_scope: PilotRecommendation;
+  recommended_next_step: string;
 }
 
 export interface SavingsBreakdownRow {
@@ -253,6 +304,11 @@ export interface RetrospectiveReport {
     latency_blocked_count: number;
     data_residency_blocked_count: number;
   };
+  savings_range: SavingsRange;
+  data_quality: DataQuality;
+  pilot_recommendation: PilotRecommendation;
+  not_counted_savings: NotCountedItem[];
+  diagnostic: DiagnosticReport;
   breakdowns: {
     savings_by_workload_type: SavingsBreakdownRow[];
     savings_by_current_region: SavingsBreakdownRow[];

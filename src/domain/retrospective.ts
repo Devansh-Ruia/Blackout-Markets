@@ -14,6 +14,13 @@ import type {
   Workload,
   WorkloadReportRow
 } from './types';
+import {
+  assessDataQuality,
+  buildDiagnosticReport,
+  buildSavingsRange,
+  notCountedSavings,
+  recommendPilot
+} from './diagnostic';
 
 const defaultPue = 1.2;
 
@@ -426,6 +433,7 @@ function rowFromParts(input: {
     counted_in_savings: counted,
     valid: input.valid ?? true,
     priority: input.workload.priority,
+    latency_sensitive: input.workload.latency_sensitive,
     validation_errors: input.validation_errors ?? [],
     capacity_checked: input.valid ?? true,
     capacity_reserved: 0,
@@ -467,6 +475,7 @@ function invalidWorkloadRow(row: InvalidRow, assumptions: RetrospectiveReportAss
     counted_in_savings: false,
     valid: false,
     priority: row.priority ?? 'normal',
+    latency_sensitive: false,
     validation_errors: [row.reason],
     capacity_checked: false,
     capacity_reserved: 0,
@@ -1103,37 +1112,55 @@ export function buildRetrospectiveReport(input: BuildRetrospectiveReportInput): 
   const policyReasons = new Set(['region_policy', 'carbon_ceiling', 'latency', 'data_residency']);
   const workloadSummary = workloadInputSummary(input.workloads, input.invalid_rows);
   const regionSummary = regionInputSummary(input.regions);
-
-  return {
-    generated_at: input.generated_at ?? new Date().toISOString(),
+  const savingsRange = buildSavingsRange(reportSummary.estimated_savings_usd);
+  const dataQuality = assessDataQuality(input);
+  const notCounted = notCountedSavings();
+  const breakdowns = {
+    savings_by_workload_type: savingsBreakdown(rows, (row) => (row.valid ? row.workload_type : null)),
+    savings_by_current_region: savingsBreakdown(rows, (row) => (row.valid ? row.current_region : null)),
+    savings_by_recommended_region: savingsBreakdown(rows, (row) =>
+      row.valid && row.recommended_region ? row.recommended_region : null
+    ),
+    recommendations_by_type: recommendationsByType,
+    recommendations_by_priority: recommendationsByPriority,
+    blocked_reasons_count: blockedReasonsCount(rows),
+    top_could_not_move_reasons: couldNotMoveReasonsCount(rows),
+    confidence_breakdown: confidenceBreakdown(rows),
+    policy_violations: rows
+      .filter((row) => row.blocked_reasons.some((reason) => policyReasons.has(reason)))
+      .map((row) => ({ workload_id: row.id, reason: row.reason, blocked_reasons: row.blocked_reasons })),
+    top_savings_opportunities: rows
+      .filter((row) => row.counted_in_savings && row.hard_savings_usd > 0)
+      .sort((a, b) => b.hard_savings_usd - a.hard_savings_usd || a.id.localeCompare(b.id))
+      .slice(0, 10),
+    workloads_excluded_from_savings: rows.filter((row) => !row.counted_in_savings)
+  };
+  const generatedAt = input.generated_at ?? new Date().toISOString();
+  const baseReportInput = {
+    generated_at: generatedAt,
     raw_policy: input.policy,
     assumptions,
     workload_input_summary: workloadSummary,
     region_input_summary: regionSummary,
     summary: reportSummary,
-    breakdowns: {
-      savings_by_workload_type: savingsBreakdown(rows, (row) => (row.valid ? row.workload_type : null)),
-      savings_by_current_region: savingsBreakdown(rows, (row) => (row.valid ? row.current_region : null)),
-      savings_by_recommended_region: savingsBreakdown(rows, (row) =>
-        row.valid && row.recommended_region ? row.recommended_region : null
-      ),
-      recommendations_by_type: recommendationsByType,
-      recommendations_by_priority: recommendationsByPriority,
-      blocked_reasons_count: blockedReasonsCount(rows),
-      top_could_not_move_reasons: couldNotMoveReasonsCount(rows),
-      confidence_breakdown: confidenceBreakdown(rows),
-      policy_violations: rows
-        .filter((row) => row.blocked_reasons.some((reason) => policyReasons.has(reason)))
-        .map((row) => ({ workload_id: row.id, reason: row.reason, blocked_reasons: row.blocked_reasons })),
-      top_savings_opportunities: rows
-        .filter((row) => row.counted_in_savings && row.hard_savings_usd > 0)
-        .sort((a, b) => b.hard_savings_usd - a.hard_savings_usd || a.id.localeCompare(b.id))
-        .slice(0, 10),
-      workloads_excluded_from_savings: rows.filter((row) => !row.counted_in_savings)
-    },
+    savings_range: savingsRange,
+    data_quality: dataQuality,
+    not_counted_savings: notCounted,
+    breakdowns,
     aggregate_report_summary: reportSummary,
     recommendations: rows,
     rows,
     validation_errors: input.validation_errors ?? []
+  };
+  const pilot = recommendPilot(baseReportInput, dataQuality);
+  const baseReport = {
+    ...baseReportInput,
+    pilot_recommendation: pilot
+  };
+  const diagnostic = buildDiagnosticReport(baseReport, dataQuality);
+
+  return {
+    ...baseReport,
+    diagnostic
   };
 }

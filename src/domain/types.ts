@@ -101,6 +101,10 @@ export interface Recommendation {
   reason: string;
   valid: boolean;
   priority: Priority;
+  capacity_checked: boolean;
+  capacity_reserved: number;
+  remaining_region_capacity_after_assignment: number | null;
+  capacity_reason: string | null;
 }
 
 export interface OptimizationReport {
@@ -143,18 +147,27 @@ export interface WorkloadReportRow {
   current_region: string;
   recommended_region: string | null;
   recommendation_type: RecommendationType;
+  recommendation: RecommendationType;
   baseline_cost_usd: number;
   recommended_cost_usd: number;
   hard_savings_usd: number;
+  estimated_savings_usd: number;
   baseline_carbon_g: number;
   recommended_carbon_g: number;
   carbon_delta_g: number;
+  delay_minutes: number;
   confidence: Confidence;
   reason: string;
   blocked_reasons: string[];
+  could_not_move_reasons: string[];
   counted_in_savings: boolean;
   valid: boolean;
   priority: Priority;
+  validation_errors: string[];
+  capacity_checked: boolean;
+  capacity_reserved: number;
+  remaining_region_capacity_after_assignment: number | null;
+  capacity_reason: string | null;
   assumptions: {
     baseline: EstimateAssumptions | null;
     recommended: EstimateAssumptions | null;
@@ -186,7 +199,28 @@ export interface RetrospectiveReportAssumptions {
 
 export interface RetrospectiveReport {
   generated_at: string;
+  raw_policy: Policy;
   assumptions: RetrospectiveReportAssumptions;
+  workload_input_summary: {
+    total_rows: number;
+    valid_rows: number;
+    invalid_rows: number;
+    by_priority: Record<Priority, number>;
+    by_workload_type: Array<{ workload_type: string; count: number }>;
+  };
+  region_input_summary: {
+    total_regions: number;
+    total_gpu_available: number;
+    by_grid_stress: Record<GridStress, number>;
+    regions: Array<{
+      region: string;
+      gpu_available: number;
+      electricity_price_per_kwh: number;
+      carbon_intensity_g_per_kwh: number;
+      grid_stress: GridStress;
+      pue: number | null;
+    }>;
+  };
   summary: {
     total_workloads: number;
     valid_workloads: number;
@@ -203,8 +237,14 @@ export interface RetrospectiveReport {
     recommended_cost_usd: number;
     hard_savings_usd: number;
     hard_savings_percent: number;
+    estimated_savings_usd: number;
+    estimated_savings_percent: number;
+    total_baseline_cost_usd: number;
+    total_recommended_cost_usd: number;
     baseline_carbon_g: number;
     recommended_carbon_g: number;
+    total_baseline_carbon_g: number;
+    total_recommended_carbon_g: number;
     carbon_delta_g: number;
     carbon_delta_percent: number;
     average_confidence: number;
@@ -218,12 +258,16 @@ export interface RetrospectiveReport {
     savings_by_current_region: SavingsBreakdownRow[];
     savings_by_recommended_region: SavingsBreakdownRow[];
     recommendations_by_type: Record<RecommendationType, number>;
+    recommendations_by_priority: Record<Priority, Record<RecommendationType, number>>;
     blocked_reasons_count: Array<{ reason: string; count: number }>;
+    top_could_not_move_reasons: Array<{ reason: string; count: number }>;
     confidence_breakdown: Record<Confidence, number>;
     policy_violations: Array<{ workload_id: string; reason: string; blocked_reasons: string[] }>;
     top_savings_opportunities: WorkloadReportRow[];
     workloads_excluded_from_savings: WorkloadReportRow[];
   };
+  aggregate_report_summary: RetrospectiveReport['summary'];
+  recommendations: WorkloadReportRow[];
   rows: WorkloadReportRow[];
   validation_errors: ValidationError[];
 }

@@ -16,6 +16,13 @@ const stressWeight = {
   high: 0.22
 };
 
+const priorityRank: Record<Workload['priority'], number> = {
+  critical: 0,
+  high: 1,
+  normal: 2,
+  low: 3
+};
+
 function round(value: number, places = 4) {
   const factor = 10 ** places;
   return Math.round(value * factor) / factor;
@@ -67,7 +74,11 @@ function makeRecommendation(
     confidence: options.confidence ?? 'high',
     reason: options.reason,
     valid: options.valid ?? true,
-    priority: workload.priority
+    priority: workload.priority,
+    capacity_checked: options.valid ?? true,
+    capacity_reserved: 0,
+    remaining_region_capacity_after_assignment: null,
+    capacity_reason: null
   };
 }
 
@@ -94,7 +105,11 @@ export function invalidInputRecommendation(input: {
     confidence: 'low',
     reason: input.reason,
     valid: false,
-    priority: input.priority ?? 'normal'
+    priority: input.priority ?? 'normal',
+    capacity_checked: false,
+    capacity_reserved: 0,
+    remaining_region_capacity_after_assignment: null,
+    capacity_reason: null
   };
 }
 
@@ -131,9 +146,15 @@ function latencyLimit(workload: Workload, policy: Policy) {
   return policy.max_latency_ms;
 }
 
-function targetIsValid(workload: Workload, region: Region, allowed: Set<string>, policy: Policy) {
+function targetIsValid(
+  workload: Workload,
+  region: Region,
+  allowed: Set<string>,
+  policy: Policy,
+  remainingCapacity: Map<string, number>
+) {
   if (!allowed.has(region.region)) return false;
-  if (region.gpu_available < workload.gpu_count) return false;
+  if ((remainingCapacity.get(region.region) ?? region.gpu_available) < workload.gpu_count) return false;
   if (policy.carbon_ceiling_g_per_kwh !== null && region.carbon_intensity_g_per_kwh > policy.carbon_ceiling_g_per_kwh) {
     return false;
   }
@@ -144,6 +165,50 @@ function targetIsValid(workload: Workload, region: Region, allowed: Set<string>,
   }
 
   return true;
+}
+
+function targetIsValidExceptCapacity(workload: Workload, region: Region, allowed: Set<string>, policy: Policy) {
+  if (!allowed.has(region.region)) return false;
+  if (policy.carbon_ceiling_g_per_kwh !== null && region.carbon_intensity_g_per_kwh > policy.carbon_ceiling_g_per_kwh) {
+    return false;
+  }
+
+  const maxLatency = latencyLimit(workload, policy);
+  if (maxLatency !== null && maxLatency !== undefined && region.avg_latency_ms !== undefined && region.avg_latency_ms > maxLatency) {
+    return false;
+  }
+
+  return true;
+}
+
+function capacityReasonFor(
+  workload: Workload,
+  regions: Region[],
+  allowed: Set<string>,
+  policy: Policy,
+  remainingCapacity: Map<string, number>
+) {
+  const blockedMove = regions.find(
+    (region) =>
+      region.region !== workload.current_region &&
+      targetIsValidExceptCapacity(workload, region, allowed, policy) &&
+      (remainingCapacity.get(region.region) ?? region.gpu_available) < workload.gpu_count
+  );
+
+  if (blockedMove) {
+    return `Cannot move because ${blockedMove.region} does not have enough remaining GPU capacity.`;
+  }
+
+  const current = regions.find((region) => region.region === workload.current_region);
+  if (
+    current &&
+    targetIsValidExceptCapacity(workload, current, allowed, policy) &&
+    (remainingCapacity.get(current.region) ?? current.gpu_available) < workload.gpu_count
+  ) {
+    return `Cannot run in ${current.region} because it does not have enough remaining GPU capacity.`;
+  }
+
+  return null;
 }
 
 function scoreTarget(workload: Workload, region: Region, assumptions: Assumptions) {
@@ -183,13 +248,23 @@ function confidenceFor(
   return confidence;
 }
 
-function bestTarget(workload: Workload, current: Region, regions: Region[], policy: Policy, assumptions: Assumptions) {
-  const allowed = effectiveAllowedRegions(workload, regions, policy);
-  const candidates = regions.filter((region) => targetIsValid(workload, region, allowed, policy));
-  const ranked = [...candidates].sort((a, b) => scoreTarget(workload, a, assumptions) - scoreTarget(workload, b, assumptions));
+function bestTarget(
+  workload: Workload,
+  regions: Region[],
+  allowed: Set<string>,
+  policy: Policy,
+  assumptions: Assumptions,
+  remainingCapacity: Map<string, number>
+) {
+  const capacity_reason = capacityReasonFor(workload, regions, allowed, policy, remainingCapacity);
+  const candidates = regions.filter((region) => targetIsValid(workload, region, allowed, policy, remainingCapacity));
+  const ranked = [...candidates].sort((a, b) => {
+    const scoreDelta = scoreTarget(workload, a, assumptions) - scoreTarget(workload, b, assumptions);
+    return scoreDelta === 0 ? a.region.localeCompare(b.region) : scoreDelta;
+  });
   const target = ranked[0] ?? null;
 
-  return { target, candidates, allowed };
+  return { target, candidates, capacity_reason };
 }
 
 function canDelayWithinDeadline(workload: Workload, policy: Policy) {
@@ -213,10 +288,73 @@ function delayRecommendation(workload: Workload, current: Region, assumptions: A
   });
 }
 
-function optimizeOne(workload: Workload, regions: Region[], policy: Policy, assumptions: Assumptions): Recommendation {
+function cannotDelayReason(workload: Workload, policy: Policy) {
+  if (!workload.can_delay) return 'Cannot delay because can_delay is false.';
+  if (policy.max_delay_minutes <= 0) return 'Cannot delay because policy max_delay_minutes is 0.';
+  if (
+    workload.deadline_minutes_from_now !== undefined &&
+    policy.max_delay_minutes + workload.expected_duration_minutes > workload.deadline_minutes_from_now
+  ) {
+    return 'Cannot delay because deadline would be missed.';
+  }
+  return null;
+}
+
+function currentCapacityReason(workload: Workload, current: Region, remainingCapacity: Map<string, number>) {
+  const remaining = remainingCapacity.get(current.region) ?? current.gpu_available;
+  if (remaining >= workload.gpu_count) return null;
+  return `Cannot run in ${current.region} because it does not have enough remaining GPU capacity.`;
+}
+
+function markCapacityReason(result: Recommendation, reason: string | null) {
+  result.capacity_reason = reason;
+  return result;
+}
+
+function moveReason(current: Region, target: Region, savings: number, carbonDelta: number) {
+  if (savings > 0 && carbonDelta < 0) {
+    return `Moved from ${current.region} to ${target.region} because estimated energy cost and carbon are lower and policy allows it.`;
+  }
+  if (savings > 0) {
+    return `Moved from ${current.region} to ${target.region} because estimated energy cost is lower and policy allows it.`;
+  }
+  if (carbonDelta < 0) {
+    return `Moved from ${current.region} to ${target.region} because estimated carbon is lower and policy allows it.`;
+  }
+  return `Moved from ${current.region} to ${target.region} because policy allows it and the current region is not the best safe target.`;
+}
+
+function reserveCapacity(result: Recommendation, workload: Workload, remainingCapacity: Map<string, number>) {
+  if (!result.valid) return result;
+  if (!['move_region', 'run_now', 'pinned'].includes(result.recommendation)) return result;
+
+  const remaining = remainingCapacity.get(result.recommended_region);
+  if (remaining === undefined) return result;
+
+  if (remaining < workload.gpu_count) {
+    result.capacity_reserved = 0;
+    result.remaining_region_capacity_after_assignment = remaining;
+    result.capacity_reason = `Cannot run in ${result.recommended_region} because it does not have enough remaining GPU capacity.`;
+    return result;
+  }
+
+  const next = remaining - workload.gpu_count;
+  remainingCapacity.set(result.recommended_region, next);
+  result.capacity_reserved = workload.gpu_count;
+  result.remaining_region_capacity_after_assignment = next;
+  return result;
+}
+
+function optimizeOne(
+  workload: Workload,
+  regions: Region[],
+  policy: Policy,
+  assumptions: Assumptions,
+  remainingCapacity: Map<string, number>
+): Recommendation {
   const current = regions.find((region) => region.region === workload.current_region);
   if (!current) {
-    return invalidRecommendation(workload, `Current region ${workload.current_region} is missing from region data`);
+    return invalidRecommendation(workload, `Invalid because current_region ${workload.current_region} is missing from region data.`);
   }
 
   if (workload.data_residency_region && !regions.some((region) => region.region === workload.data_residency_region)) {
@@ -230,6 +368,8 @@ function optimizeOne(workload: Workload, regions: Region[], policy: Policy, assu
     );
   }
 
+  const allowed = effectiveAllowedRegions(workload, regions, policy);
+  const currentCapacity = currentCapacityReason(workload, current, remainingCapacity);
   const currentCarbonBlocked =
     policy.carbon_ceiling_g_per_kwh !== null &&
     current.carbon_intensity_g_per_kwh > policy.carbon_ceiling_g_per_kwh;
@@ -245,8 +385,27 @@ function optimizeOne(workload: Workload, regions: Region[], policy: Policy, assu
       );
     }
 
+    if (!allowed.has(current.region)) {
+      return makeRecommendation(workload, 'manual_review', current, current, assumptions, {
+        confidence: 'low',
+        reason: `Manual review because policy blocks ${current.region}, but data residency pins this job there.`,
+        policy_reason: 'Policy conflicts with data residency pin'
+      });
+    }
+
+    if (currentCapacity) {
+      return markCapacityReason(
+        makeRecommendation(workload, 'manual_review', current, current, assumptions, {
+          confidence: 'low',
+          reason: `Manual review because ${currentCapacity}`,
+          policy_reason: 'Pinned region is out of remaining batch capacity'
+        }),
+        currentCapacity
+      );
+    }
+
     return makeRecommendation(workload, 'pinned', current, current, assumptions, {
-      reason: `This job cannot move because data residency pins it to ${workload.data_residency_region}.`,
+      reason: `Pinned because data residency pins it to ${workload.data_residency_region}.`,
       policy_reason: 'Data residency pin'
     });
   }
@@ -262,13 +421,32 @@ function optimizeOne(workload: Workload, regions: Region[], policy: Policy, assu
       );
     }
 
+    if (!allowed.has(current.region)) {
+      return makeRecommendation(workload, 'manual_review', current, current, assumptions, {
+        confidence: 'low',
+        reason: `Manual review because policy blocks ${current.region}, but can_move is false.`,
+        policy_reason: 'Policy conflicts with movement pin'
+      });
+    }
+
+    if (currentCapacity) {
+      return markCapacityReason(
+        makeRecommendation(workload, 'manual_review', current, current, assumptions, {
+          confidence: 'low',
+          reason: `Manual review because ${currentCapacity}`,
+          policy_reason: 'Pinned workload is out of remaining batch capacity'
+        }),
+        currentCapacity
+      );
+    }
+
     return makeRecommendation(workload, 'pinned', current, current, assumptions, {
-      reason: 'This job cannot move because can_move is false.',
+      reason: 'Pinned because can_move is false; workload cannot move.',
       policy_reason: 'Movement disabled by workload'
     });
   }
 
-  const { target, candidates } = bestTarget(workload, current, regions, policy, assumptions);
+  const { target, candidates, capacity_reason } = bestTarget(workload, regions, allowed, policy, assumptions, remainingCapacity);
 
   if (!target) {
     if (currentCarbonBlocked && canDelayWithinDeadline(workload, policy)) {
@@ -281,11 +459,14 @@ function optimizeOne(workload: Workload, regions: Region[], policy: Policy, assu
       );
     }
 
-    return makeRecommendation(workload, 'manual_review', current, current, assumptions, {
-      confidence: 'low',
-      reason: 'No approved region has enough GPU capacity while satisfying policy constraints.',
-      policy_reason: 'No valid target region'
-    });
+    return markCapacityReason(
+      makeRecommendation(workload, 'manual_review', current, current, assumptions, {
+        confidence: 'low',
+        reason: capacity_reason ?? 'Manual review because no approved region satisfies capacity, latency, residency, carbon, and region policy.',
+        policy_reason: 'No valid target region'
+      }),
+      capacity_reason
+    );
   }
 
   const baseline = estimateCost(workload, current, assumptions);
@@ -316,55 +497,88 @@ function optimizeOne(workload: Workload, regions: Region[], policy: Policy, assu
       );
     }
 
-    const deadlineNote =
-      workload.can_delay && workload.deadline_minutes_from_now !== undefined && policy.max_delay_minutes >= workload.deadline_minutes_from_now
-        ? ' Delay was skipped because it would run past the workload deadline.'
-        : '';
+    const deadlineNote = cannotDelayReason(workload, policy);
     const latencyNote = workload.latency_sensitive ? ' latency policy prevents approved moves above the workload limit.' : '';
+    const capacityNote = capacity_reason ? ` ${capacity_reason}` : '';
 
-    return makeRecommendation(workload, 'run_now', current, current, assumptions, {
-      reason: `Run now in ${current.region}; no approved move improves cost, carbon, capacity, and policy enough.${deadlineNote}${latencyNote}`,
-      policy_reason: 'Current region is the best valid option'
-    });
+    return markCapacityReason(
+      makeRecommendation(workload, 'run_now', current, current, assumptions, {
+        reason: `Run now in ${current.region}; no approved move improves estimated cost, carbon, capacity, and policy enough.${
+          deadlineNote ? ` ${deadlineNote}` : ''
+        }${latencyNote}${capacityNote}`,
+        policy_reason: 'Current region is the best valid option'
+      }),
+      capacity_reason
+    );
   }
 
   if (workload.priority === 'critical') {
-    return makeRecommendation(workload, 'manual_review', current, target, assumptions, {
-      confidence: 'medium',
-      reason: `Manual review because this critical workload could move to ${target.region}, but critical priority should not move automatically.`,
-      policy_reason: 'Critical priority requires operator review'
-    });
+    return markCapacityReason(
+      makeRecommendation(workload, 'manual_review', current, target, assumptions, {
+        confidence: 'medium',
+        reason: `Manual review because this critical workload could move to ${target.region}, but critical priority should not move automatically.${
+          capacity_reason ? ` ${capacity_reason}` : ''
+        }`,
+        policy_reason: 'Critical priority requires operator review'
+      }),
+      capacity_reason
+    );
   }
 
   if (target.grid_stress === 'high' && savings < baseline.cost_usd * 0.2 && carbonDelta >= 0) {
-    return makeRecommendation(workload, 'manual_review', current, target, assumptions, {
-      confidence: 'low',
-      reason: `Manual review because ${target.region} has high grid stress and the savings are not large enough to justify an automatic move.`,
-      policy_reason: 'High grid stress target'
-    });
+    return markCapacityReason(
+      makeRecommendation(workload, 'manual_review', current, target, assumptions, {
+        confidence: 'low',
+        reason: `Manual review because ${target.region} has high grid stress and the savings are not large enough to justify an automatic move.${
+          capacity_reason ? ` ${capacity_reason}` : ''
+        }`,
+        policy_reason: 'High grid stress target'
+      }),
+      capacity_reason
+    );
   }
 
   if (confidence === 'low' && policy.require_manual_for_low_confidence) {
-    return makeRecommendation(workload, 'manual_review', current, target, assumptions, {
-      confidence,
-      reason: `Manual review because the best move is low confidence even though ${target.region} has the best weighted score.`,
-      policy_reason: 'Low confidence move requires approval'
-    });
+    return markCapacityReason(
+      makeRecommendation(workload, 'manual_review', current, target, assumptions, {
+        confidence,
+        reason: `Manual review because the target ${target.region} is low confidence after grid stress, latency, and reliability checks.${
+          capacity_reason ? ` ${capacity_reason}` : ''
+        }`,
+        policy_reason: 'Low confidence move requires approval'
+      }),
+      capacity_reason
+    );
   }
 
   const worse = savings <= 0 && carbonDelta >= 0;
   if (worse && candidates.some((region) => region.region === current.region)) {
-    return makeRecommendation(workload, 'run_now', current, current, assumptions, {
-      reason: `Run now in ${current.region}; available moves do not reduce cost or carbon.`,
-      policy_reason: 'No beneficial approved move'
-    });
+    return markCapacityReason(
+      makeRecommendation(workload, 'run_now', current, current, assumptions, {
+        reason: `Run now in ${current.region}; available moves do not reduce estimated cost or carbon.${
+          capacity_reason ? ` ${capacity_reason}` : ''
+        }`,
+        policy_reason: 'No beneficial approved move'
+      }),
+      capacity_reason
+    );
   }
 
-  return makeRecommendation(workload, 'move_region', current, target, assumptions, {
-    confidence,
-    reason: `Move to ${target.region}; it has the best weighted score among approved regions with enough GPU capacity.`,
-    policy_reason: 'Approved move satisfies capacity, latency, residency, carbon, and region policy'
-  });
+  return markCapacityReason(
+    makeRecommendation(workload, 'move_region', current, target, assumptions, {
+      confidence,
+      reason: `${moveReason(current, target, savings, carbonDelta)}${capacity_reason ? ` ${capacity_reason}` : ''}`,
+      policy_reason: 'Approved move satisfies capacity, latency, residency, carbon, and region policy'
+    }),
+    capacity_reason
+  );
+}
+
+function priorityOrdered(workloads: Workload[]) {
+  return workloads
+    .map((workload, index) => ({ workload, index }))
+    .sort((a, b) => priorityRank[a.workload.priority] - priorityRank[b.workload.priority] || a.index - b.index)
+    .map((item) => item.workload);
 }
 
 export function optimize(
@@ -375,9 +589,12 @@ export function optimize(
   validation_errors: ValidationError[] = [],
   extraRecommendations: Recommendation[] = []
 ): OptimizationReport {
+  const remainingCapacity = new Map(regions.map((region) => [region.region, region.gpu_available]));
   const recommendations = [
     ...extraRecommendations,
-    ...workloads.map((workload) => optimizeOne(workload, regions, policy, assumptions))
+    ...priorityOrdered(workloads).map((workload) =>
+      reserveCapacity(optimizeOne(workload, regions, policy, assumptions, remainingCapacity), workload, remainingCapacity)
+    )
   ];
 
   const summary = recommendations.reduce(

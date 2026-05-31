@@ -179,6 +179,17 @@ app.post(
 );
 
 app.post('/api/export/csv', (req, res) => {
+  const reportRows = Array.isArray(req.body?.rows)
+    ? req.body.rows
+    : Array.isArray(req.body?.report?.rows)
+      ? req.body.report.rows
+      : null;
+  if (reportRows) {
+    res.header('Content-Type', 'text/csv');
+    res.send(workloadReportRowsToCsv(reportRows));
+    return;
+  }
+
   const rows = Array.isArray(req.body?.recommendations) ? req.body.recommendations : [];
   res.header('Content-Type', 'text/csv');
   res.send(recommendationsToCsv(rows));

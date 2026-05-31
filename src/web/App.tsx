@@ -138,18 +138,27 @@ function ExecutiveSummary({ report }: { report: RetrospectiveReport }) {
   return (
     <section>
       <div className="section-title">
-        <h2>Executive summary</h2>
-        <span>{report.summary.valid_workloads} valid workload{report.summary.valid_workloads === 1 ? '' : 's'}</span>
+        <h2>Batch estimate</h2>
+        <span>This report is for decision support, not exact billing.</span>
       </div>
       <div className="summary-grid">
         <MetricCard label="total workloads" value={report.summary.total_workloads} />
-        <MetricCard label="Hard savings" value={money(report.summary.hard_savings_usd)} />
-        <MetricCard label="hard savings percent" value={percent(report.summary.hard_savings_percent)} />
+        <MetricCard label="valid workloads" value={report.summary.valid_workloads} />
+        <MetricCard label="invalid workloads" value={report.summary.invalid_workloads} />
+        <MetricCard label="run now" value={report.summary.run_now_count} />
+        <MetricCard label="delay" value={report.summary.delay_count} />
+        <MetricCard label="move region" value={report.summary.move_region_count} />
+        <MetricCard label="manual review" value={report.summary.manual_review_count} />
+        <MetricCard label="pinned" value={report.summary.pinned_count} />
+        <MetricCard label="estimated baseline cost" value={money(report.summary.baseline_cost_usd)} />
+        <MetricCard label="estimated recommended cost" value={money(report.summary.recommended_cost_usd)} />
+        <MetricCard label="estimated savings" value={money(report.summary.estimated_savings_usd)} />
+        <MetricCard label="estimated savings percent" value={percent(report.summary.estimated_savings_percent)} />
+        <MetricCard label="estimated baseline carbon" value={`${number(report.summary.baseline_carbon_g)} g`} />
+        <MetricCard label="estimated recommended carbon" value={`${number(report.summary.recommended_carbon_g)} g`} />
         <MetricCard label="carbon delta" value={`${number(report.summary.carbon_delta_g)} g`} />
         <MetricCard label="movable percent" value={percent(report.summary.movable_percent)} />
         <MetricCard label="pinned percent" value={percent(report.summary.pinned_percent)} />
-        <MetricCard label="manual review count" value={report.summary.manual_review_count} />
-        <MetricCard label="invalid workload count" value={report.summary.invalid_workloads} />
       </div>
     </section>
   );
@@ -172,6 +181,49 @@ function RecommendationMix({ report }: { report: RetrospectiveReport }) {
           </div>
         ))}
       </div>
+      <div className="confidence-grid">
+        {confidenceTypes.filter((type): type is Confidence => type !== 'all').map((type) => (
+          <MetricCard key={type} label={`${type} confidence`} value={report.breakdowns.confidence_breakdown[type]} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function PriorityBreakdown({ report }: { report: RetrospectiveReport }) {
+  const priorities = ['critical', 'high', 'normal', 'low'] as const;
+  const rows = recTypes.filter((type): type is RecommendationType => type !== 'all');
+
+  return (
+    <section className="panel">
+      <div className="section-title">
+        <h2>Priority breakdown</h2>
+        <span>Capacity is reserved in this order.</span>
+      </div>
+      <div className="table-wrap compact-table">
+        <table>
+          <thead>
+            <tr>
+              <th>priority</th>
+              {rows.map((type) => (
+                <th key={type}>{type}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {priorities.map((priority) => (
+              <tr key={priority}>
+                <td>
+                  <strong>{priority}</strong>
+                </td>
+                {rows.map((type) => (
+                  <td key={`${priority}-${type}`}>{report.breakdowns.recommendations_by_priority[priority][type]}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </section>
   );
 }
@@ -191,7 +243,7 @@ function BreakdownTable({ title, rows }: { title: string; rows: SavingsBreakdown
               <th>workloads</th>
               <th>baseline cost</th>
               <th>recommended cost</th>
-              <th>Hard savings</th>
+              <th>estimated savings</th>
               <th>carbon delta</th>
             </tr>
           </thead>
@@ -221,7 +273,7 @@ function Blockers({ report }: { report: RetrospectiveReport }) {
     <section className="panel">
       <div className="section-title">
         <h2>Blockers</h2>
-        <span>Blocked by policy, latency, capacity, and data residency</span>
+        <span>Workloads that could not safely move</span>
       </div>
       <div className="blocker-grid">
         <MetricCard label="Blocked by policy" value={report.summary.policy_violation_count} />
@@ -231,9 +283,9 @@ function Blockers({ report }: { report: RetrospectiveReport }) {
       </div>
       <div className="two-column">
         <div>
-          <h3>Top blocked reasons</h3>
+          <h3>Top reasons workloads could not move</h3>
           <ul className="plain-list">
-            {report.breakdowns.blocked_reasons_count.slice(0, 8).map((item) => (
+            {report.breakdowns.top_could_not_move_reasons.slice(0, 8).map((item) => (
               <li key={item.reason}>
                 <strong>{item.reason}</strong>
                 <span>{item.count}</span>
@@ -254,7 +306,7 @@ function Blockers({ report }: { report: RetrospectiveReport }) {
         </div>
       </div>
       <div className="excluded">
-        <h3>Excluded from savings</h3>
+        <h3>Excluded from estimated savings</h3>
         <div className="table-wrap compact-table">
           <table>
             <thead>
@@ -302,7 +354,7 @@ function TopOpportunities({ rows }: { rows: WorkloadReportRow[] }) {
               <th>workload</th>
               <th>action</th>
               <th>region</th>
-              <th>Hard savings</th>
+              <th>estimated savings</th>
               <th>reason</th>
             </tr>
           </thead>
@@ -325,7 +377,7 @@ function TopOpportunities({ rows }: { rows: WorkloadReportRow[] }) {
             ))}
           </tbody>
         </table>
-        {rows.length === 0 ? <div className="empty-state">No hard savings counted.</div> : null}
+        {rows.length === 0 ? <div className="empty-state">No estimated savings counted.</div> : null}
       </div>
     </section>
   );
@@ -344,7 +396,7 @@ function WorkloadTable({ rows }: { rows: WorkloadReportRow[] }) {
             <th>region</th>
             <th>baseline</th>
             <th>recommended</th>
-            <th>Hard savings</th>
+            <th>estimated savings</th>
             <th>carbon delta</th>
             <th>confidence</th>
             <th>blocked reasons</th>
@@ -364,7 +416,7 @@ function WorkloadTable({ rows }: { rows: WorkloadReportRow[] }) {
               <td>{number(row.expected_duration_hours)} h</td>
               <td>
                 <span className={`pill ${row.recommendation_type}`}>{row.recommendation_type}</span>
-                <span>{row.counted_in_savings ? 'counted' : 'Excluded from savings'}</span>
+                <span>{row.counted_in_savings ? 'counted' : 'Excluded from estimated savings'}</span>
               </td>
               <td>
                 {row.current_region || 'unknown'} {'->'} {row.recommended_region ?? 'none'}
@@ -479,7 +531,7 @@ export function App() {
       <header className="topbar">
         <div>
           <h1>Blackout Markets</h1>
-          <p>Retrospective savings report for GPU workload scheduling decisions.</p>
+          <p>Shadow mode only. No jobs are moved. Use historical logs to see what Blackout would have recommended.</p>
         </div>
         <nav aria-label="Workflow">
           {(['upload', 'policy', 'results'] as Step[]).map((item) => (
@@ -499,8 +551,9 @@ export function App() {
         <section className="screen">
           <div className="screen-head">
             <h2>Upload last week</h2>
-            <p>Load workload logs and region energy data for the retrospective report.</p>
+            <p>Upload customer workload logs and region energy data. No demo data is loaded automatically.</p>
           </div>
+          <div className="notice">Review recommendations before using them in production.</div>
           <div className="upload-grid">
             <FileBox label="Workload CSV" file={workloadFile} accept=".csv,text/csv" onChange={setWorkloadFile} />
             <FileBox label="Region CSV" file={regionFile} accept=".csv,text/csv" onChange={setRegionFile} />
@@ -521,6 +574,7 @@ export function App() {
             <h2>Policy constraints</h2>
             <p>Leave allowed regions empty to use every uploaded region unless another rule blocks it.</p>
           </div>
+          <div className="notice">Shadow mode only. These settings shape the report; they do not schedule jobs.</div>
           <div className="policy-grid">
             <label>
               <span>max delay minutes</span>
@@ -602,8 +656,10 @@ export function App() {
             <div>
               <h2>Retrospective report</h2>
               <p>
-                Cost: {report.assumptions.cost_formula}. Default PUE: {report.assumptions.default_pue}. GPU assumption:{' '}
-                {report.assumptions.gpu_kwh_assumption} kWh per GPU-hour ({report.assumptions.gpu_kwh_assumption_source}).
+                Shadow mode only. This report estimates what Blackout would have recommended. Cost:{' '}
+                {report.assumptions.cost_formula}. Region PUE is used when uploaded; otherwise default PUE is{' '}
+                {report.assumptions.default_pue}. GPU assumption: {report.assumptions.gpu_kwh_assumption} kWh per
+                GPU-hour ({report.assumptions.gpu_kwh_assumption_source}).
               </p>
             </div>
             <div className="actions compact">
@@ -621,8 +677,10 @@ export function App() {
             </div>
           </div>
           <ValidationList report={report} />
+          <div className="notice">This report is for decision support, not exact billing. Review recommendations before using them in production.</div>
           <ExecutiveSummary report={report} />
           <RecommendationMix report={report} />
+          <PriorityBreakdown report={report} />
           <div className="breakdown-grid">
             <BreakdownTable title="Savings by workload type" rows={report.breakdowns.savings_by_workload_type} />
             <BreakdownTable title="Savings by current region" rows={report.breakdowns.savings_by_current_region} />

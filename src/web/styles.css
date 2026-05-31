@@ -143,6 +143,7 @@ nav button.active {
 .summary-grid,
 .filters,
 .mix-grid,
+.confidence-grid,
 .blocker-grid,
 .breakdown-grid,
 .two-column {
@@ -262,6 +263,16 @@ select {
   color: var(--red);
 }
 
+.notice {
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--ink);
+  background: #fff;
+  border-radius: 8px;
+  color: var(--ink);
+  margin: 12px 0;
+  padding: 12px 14px;
+}
+
 .summary-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   margin-bottom: 16px;
@@ -284,6 +295,11 @@ select {
 
 .mix-grid {
   grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+.confidence-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 12px;
 }
 
 .mix-item {
@@ -449,7 +465,8 @@ td span {
   .summary-grid,
   .blocker-grid,
   .filters,
-  .mix-grid {
+  .mix-grid,
+  .confidence-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
@@ -465,6 +482,7 @@ td span {
   .summary-grid,
   .filters,
   .mix-grid,
+  .confidence-grid,
   .blocker-grid,
   .two-column {
     grid-template-columns: 1fr;

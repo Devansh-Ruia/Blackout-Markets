@@ -131,7 +131,9 @@ describe('retrospective report summary', () => {
     expect(report.summary.baseline_cost_usd).toBe(0.4);
     expect(report.summary.recommended_cost_usd).toBe(0.4);
     expect(report.summary.hard_savings_usd).toBe(0);
+    expect(report.summary.estimated_savings_usd).toBe(0);
     expect(report.summary.hard_savings_percent).toBe(0);
+    expect(report.summary.estimated_savings_percent).toBe(0);
     expect(report.summary.baseline_carbon_g).toBe(400);
     expect(report.summary.recommended_carbon_g).toBe(400);
     expect(report.summary.carbon_delta_g).toBe(0);
@@ -169,6 +171,10 @@ describe('retrospective report breakdowns', () => {
     expect(report.breakdowns.blocked_reasons_count).toEqual(
       expect.arrayContaining([expect.objectContaining({ reason: 'region_policy', count: 1 })])
     );
+    expect(report.breakdowns.top_could_not_move_reasons).toEqual(
+      expect.arrayContaining([expect.objectContaining({ reason: expect.stringContaining('policy'), count: 1 })])
+    );
+    expect(report.breakdowns.recommendations_by_priority.normal.move_region).toBe(2);
     expect(report.breakdowns.top_savings_opportunities.map((row) => row.id)).toEqual(['big-save', 'small-save']);
   });
 });
@@ -214,7 +220,31 @@ describe('retrospective batch capacity', () => {
     const blocked = report.rows.find((row) => row.id === 'job-b');
     expect(blocked?.recommendation_type).toBe('manual_review');
     expect(blocked?.blocked_reasons).toContain('capacity');
+    expect(blocked?.capacity_checked).toBe(true);
+    expect(blocked?.capacity_reserved).toBe(0);
+    expect(blocked?.capacity_reason).toBe('Cannot move because us-west-2 does not have enough remaining GPU capacity.');
+    expect(blocked?.could_not_move_reasons).toContain(
+      'Cannot move because us-west-2 does not have enough remaining GPU capacity.'
+    );
     expect(report.summary.capacity_blocked_count).toBe(1);
+  });
+
+  it('uses priority order for capacity reservation and keeps same-priority input order stable', () => {
+    const report = buildRetrospectiveReport({
+      workloads: [
+        workload({ id: 'low-first', priority: 'low', gpu_count: 8 }),
+        workload({ id: 'normal-second', priority: 'normal', gpu_count: 8 }),
+        workload({ id: 'normal-third', priority: 'normal', gpu_count: 8, allowed_regions: ['us-west-2'] })
+      ],
+      regions: capacityRegions,
+      policy,
+      assumptions
+    });
+
+    expect(report.rows.map((row) => row.id)).toEqual(['normal-second', 'normal-third', 'low-first']);
+    expect(report.rows.find((row) => row.id === 'normal-second')?.recommended_region).toBe('us-west-2');
+    expect(report.rows.find((row) => row.id === 'normal-third')?.recommendation_type).toBe('manual_review');
+    expect(report.rows.find((row) => row.id === 'low-first')?.recommended_region).toBe('us-central-1');
   });
 });
 
@@ -296,6 +326,11 @@ describe('retrospective exports', () => {
     });
 
     const json = JSON.parse(JSON.stringify(report));
+    expect(json.raw_policy).toEqual(policy);
+    expect(json.workload_input_summary.total_rows).toBe(1);
+    expect(json.region_input_summary.total_regions).toBe(3);
+    expect(json.aggregate_report_summary.estimated_savings_usd).toBeDefined();
+    expect(json.recommendations).toHaveLength(1);
     expect(json.summary).toBeDefined();
     expect(json.breakdowns).toBeDefined();
     expect(json.rows).toHaveLength(1);
@@ -305,6 +340,33 @@ describe('retrospective exports', () => {
     const csv = workloadReportRowsToCsv(report.rows);
 
     expect(csv.split('\n')).toHaveLength(2);
+    expect(csv.split('\n')[0]).toContain('recommendation');
+    expect(csv.split('\n')[0]).toContain('validation_errors');
     expect(csv).toContain('"Move, because cost is lower"');
+  });
+
+  it('exports invalid workloads with validation errors in the workload CSV', () => {
+    const report = buildRetrospectiveReport({
+      workloads: [],
+      regions,
+      policy,
+      assumptions,
+      invalid_rows: [
+        {
+          file: 'workloads',
+          row: 4,
+          id: 'bad-gpu',
+          current_region: 'us-east-1',
+          reason: 'gpu_count must be >= 1'
+        }
+      ],
+      validation_errors: [{ file: 'workloads', row: 4, field: 'gpu_count', message: 'gpu_count must be >= 1' }]
+    });
+
+    const csv = workloadReportRowsToCsv(report.rows);
+
+    expect(csv).toContain('bad-gpu');
+    expect(csv).toContain('invalid');
+    expect(csv).toContain('gpu_count must be >= 1');
   });
 });

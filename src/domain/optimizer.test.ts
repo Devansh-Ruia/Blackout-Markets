@@ -151,4 +151,93 @@ describe('optimize', () => {
     expect(result.recommendation).toBe('delay');
     expect(result.reason).toContain('carbon ceiling');
   });
+
+  it('reserves target capacity across the batch so only the first same-priority workload gets it', () => {
+    const capacityRegions = regions.map((region) =>
+      region.region === 'us-west-2' ? { ...region, gpu_available: 4 } : { ...region, gpu_available: 32 }
+    );
+
+    const report = optimize(
+      [workload({ id: 'same-a', gpu_count: 4 }), workload({ id: 'same-b', gpu_count: 4 })],
+      capacityRegions,
+      policy,
+      assumptions
+    );
+
+    const first = report.recommendations.find((row) => row.workload_id === 'same-a');
+    const second = report.recommendations.find((row) => row.workload_id === 'same-b');
+
+    expect(first?.recommendation).toBe('move_region');
+    expect(first?.recommended_region).toBe('us-west-2');
+    expect(first?.capacity_checked).toBe(true);
+    expect(first?.capacity_reserved).toBe(4);
+    expect(first?.remaining_region_capacity_after_assignment).toBe(0);
+    expect(second?.recommended_region).not.toBe('us-west-2');
+    expect(second?.capacity_reason).toContain('us-west-2 does not have enough remaining GPU capacity');
+  });
+
+  it('reserves capacity for higher-priority jobs before lower-priority jobs', () => {
+    const capacityRegions = regions.map((region) =>
+      region.region === 'us-west-2' ? { ...region, gpu_available: 4 } : { ...region, gpu_available: 32 }
+    );
+
+    const report = optimize(
+      [
+        workload({ id: 'low-first', priority: 'low', gpu_count: 4 }),
+        workload({ id: 'high-second', priority: 'high', gpu_count: 4 })
+      ],
+      capacityRegions,
+      policy,
+      assumptions
+    );
+
+    const high = report.recommendations.find((row) => row.workload_id === 'high-second');
+    const low = report.recommendations.find((row) => row.workload_id === 'low-first');
+
+    expect(high?.recommended_region).toBe('us-west-2');
+    expect(low?.recommended_region).not.toBe('us-west-2');
+    expect(report.recommendations.map((row) => row.workload_id)).toEqual(['high-second', 'low-first']);
+  });
+
+  it('keeps input order stable within the same priority while reserving capacity', () => {
+    const capacityRegions = regions.map((region) =>
+      region.region === 'us-west-2' ? { ...region, gpu_available: 4 } : { ...region, gpu_available: 32 }
+    );
+
+    const report = optimize(
+      [workload({ id: 'normal-a', gpu_count: 4 }), workload({ id: 'normal-b', gpu_count: 4 })],
+      capacityRegions,
+      policy,
+      assumptions
+    );
+
+    expect(report.recommendations.map((row) => row.workload_id)).toEqual(['normal-a', 'normal-b']);
+    expect(report.recommendations[0].recommended_region).toBe('us-west-2');
+    expect(report.recommendations[1].recommended_region).not.toBe('us-west-2');
+  });
+
+  it('blocks move_region when the only allowed target has insufficient remaining capacity', () => {
+    const capacityRegions = regions.map((region) =>
+      region.region === 'us-west-2' ? { ...region, gpu_available: 4 } : { ...region, gpu_available: 32 }
+    );
+
+    const report = optimize(
+      [
+        workload({ id: 'fills-target', gpu_count: 4, allowed_regions: ['us-west-2'] }),
+        workload({ id: 'blocked-target', gpu_count: 4, allowed_regions: ['us-west-2'] })
+      ],
+      capacityRegions,
+      policy,
+      assumptions
+    );
+
+    const blocked = report.recommendations.find((row) => row.workload_id === 'blocked-target');
+
+    expect(blocked?.recommendation).toBe('manual_review');
+    expect(blocked?.recommended_region).toBe('us-east-1');
+    expect(blocked?.capacity_reason).toBe(
+      'Cannot move because us-west-2 does not have enough remaining GPU capacity.'
+    );
+    expect(blocked?.reason).toContain('Cannot move because us-west-2 does not have enough remaining GPU capacity');
+  });
 });

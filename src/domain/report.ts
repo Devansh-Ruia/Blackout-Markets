@@ -22,29 +22,24 @@ const recommendationFields: Array<keyof Recommendation> = [
   'priority'
 ];
 
-const workloadReportFields: Array<keyof WorkloadReportRow> = [
-  'id',
-  'customer_id',
-  'workload_type',
-  'gpu_type',
-  'gpu_count',
-  'expected_duration_minutes',
-  'expected_duration_hours',
-  'current_region',
-  'recommended_region',
-  'recommendation_type',
-  'baseline_cost_usd',
-  'recommended_cost_usd',
-  'hard_savings_usd',
-  'baseline_carbon_g',
-  'recommended_carbon_g',
-  'carbon_delta_g',
-  'confidence',
-  'reason',
-  'blocked_reasons',
-  'counted_in_savings',
-  'valid',
-  'priority'
+const workloadReportFields: Array<{ header: string; value: (row: WorkloadReportRow) => unknown }> = [
+  { header: 'id', value: (row) => row.id },
+  { header: 'workload_type', value: (row) => row.workload_type },
+  { header: 'priority', value: (row) => row.priority },
+  { header: 'current_region', value: (row) => row.current_region },
+  { header: 'recommended_region', value: (row) => row.recommended_region },
+  { header: 'recommendation', value: (row) => row.recommendation },
+  { header: 'confidence', value: (row) => row.confidence },
+  { header: 'reason', value: (row) => row.reason },
+  { header: 'baseline_cost', value: (row) => row.baseline_cost_usd },
+  { header: 'recommended_cost', value: (row) => row.recommended_cost_usd },
+  { header: 'estimated_savings', value: (row) => row.estimated_savings_usd },
+  { header: 'baseline_carbon', value: (row) => row.baseline_carbon_g },
+  { header: 'recommended_carbon', value: (row) => row.recommended_carbon_g },
+  { header: 'carbon_delta', value: (row) => row.carbon_delta_g },
+  { header: 'delay_minutes', value: (row) => row.delay_minutes },
+  { header: 'valid', value: (row) => row.valid },
+  { header: 'validation_errors', value: (row) => row.validation_errors }
 ];
 
 function escapeCsv(value: unknown) {
@@ -62,7 +57,7 @@ export function recommendationsToCsv(rows: Recommendation[]) {
 }
 
 export function workloadReportRowsToCsv(rows: WorkloadReportRow[]) {
-  const header = workloadReportFields.join(',');
-  const body = rows.map((row) => workloadReportFields.map((field) => escapeCsv(row[field])).join(','));
+  const header = workloadReportFields.map((field) => field.header).join(',');
+  const body = rows.map((row) => workloadReportFields.map((field) => escapeCsv(field.value(row))).join(','));
   return [header, ...body].join('\n');
 }

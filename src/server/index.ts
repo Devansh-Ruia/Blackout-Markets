@@ -251,16 +251,6 @@ app.use((error: unknown, _req: Request, res: Response, next: NextFunction) => {
   next(error);
 });
 
-const staticDir = path.join(process.cwd(), 'dist-web');
-app.use(express.static(staticDir));
-app.get('*', (_req, res, next) => {
-  if (!fs.existsSync(path.join(staticDir, 'index.html'))) {
-    next();
-    return;
-  }
-  res.sendFile(path.join(staticDir, 'index.html'));
-});
-
 return app;
 }
 
@@ -273,6 +263,16 @@ export function startServer(options: StartServerOptions = {}) {
   const port = options.port ?? Number(process.env.PORT ?? 3001);
   const host = options.host ?? process.env.HOST ?? '127.0.0.1';
   const app = createApp();
+
+  const staticDir = path.join(process.cwd(), 'dist-web');
+  app.use(express.static(staticDir));
+  app.get('*', (_req, res, next) => {
+    if (!fs.existsSync(path.join(staticDir, 'index.html'))) {
+      next();
+      return;
+    }
+    res.sendFile(path.join(staticDir, 'index.html'));
+  });
 
   return app.listen(port, host, () => {
     console.log(`Blackout Markets API listening on http://${host}:${port}`);

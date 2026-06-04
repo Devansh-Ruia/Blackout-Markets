@@ -1,0 +1,5 @@
+region,electricity_price_per_kwh,carbon_intensity_g_per_kwh,gpu_available,grid_stress,pue,avg_latency_ms,reliability_score
+us-east-1,0.23,540,64,medium,1.26,18,0.97
+us-west-2,0.06,95,256,low,1.07,72,0.97
+us-central-1,0.12,250,96,low,1.14,35,0.97
+eu-west-1,0.17,80,24,medium,1.18,110,0.95

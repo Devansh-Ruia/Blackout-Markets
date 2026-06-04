@@ -1,0 +1,15 @@
+id,customer_id,workload_type,gpu_type,gpu_count,expected_duration_minutes,deadline_minutes_from_now,current_region,allowed_regions,priority,latency_sensitive,max_latency_ms,can_delay,can_move,checkpointable,data_residency_region,estimated_revenue_usd
+train-prod-001,acme,training,h100,8,300,1440,us-east-1,us-east-1|us-west-2|us-central-1,normal,false,,true,true,true,,600
+train-prod-002,acme,training,h100,16,240,1200,us-east-1,us-east-1|us-west-2|us-central-1,high,false,,true,true,true,,900
+train-prod-003,acme,training,h100,8,200,960,us-east-1,us-east-1|us-west-2|us-central-1,normal,false,,true,true,true,,500
+batch-etl-010,beta,batch,a100,4,120,720,us-east-1,us-east-1|us-west-2|us-central-1,low,false,,true,true,true,,90
+finetune-research-031,beta,training,a100,8,360,1440,us-east-1,us-east-1|us-west-2|us-central-1,low,false,,true,true,true,,140
+embed-index-021,gamma,embedding,l40,6,180,900,us-east-1,us-east-1|us-west-2|us-central-1,normal,false,,true,true,true,,220
+embed-rebuild-045,gamma,embedding,l40,4,150,720,us-east-1,us-east-1|us-west-2|us-central-1,high,false,,true,true,true,,260
+batch-render-040,delta,batch,a10,2,90,480,us-east-1,us-east-1|us-west-2|us-central-1,normal,false,,true,true,true,,60
+train-west-400,delta,training,a100,8,180,900,us-west-2,us-east-1|us-west-2|us-central-1,normal,false,,true,true,true,,300
+serve-api-100,acme,inference,l40,4,60,180,us-east-1,us-east-1|us-central-1,critical,true,25,false,true,true,,480
+serve-api-101,acme,inference,l40,2,45,150,us-east-1,us-east-1|us-central-1,high,true,25,false,true,true,,300
+legacy-db-200,beta,inference,a10,2,120,600,us-east-1,us-east-1,normal,false,,false,false,true,,70
+eu-train-300,euco,training,h100,4,240,1200,eu-west-1,eu-west-1,high,false,,true,true,true,eu-west-1,550
+eu-serve-301,euco,inference,l40,2,60,300,eu-west-1,eu-west-1,normal,true,130,false,true,true,eu-west-1,200

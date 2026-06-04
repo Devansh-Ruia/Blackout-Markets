@@ -1,6 +1,7 @@
 node_modules/
 dist-web/
 .playwright-mcp/
+tmp/
 .tailtest/
 dev-server*.log
 blackout-results.png

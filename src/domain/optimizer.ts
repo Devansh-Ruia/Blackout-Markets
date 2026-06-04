@@ -8,7 +8,7 @@ import type {
   Region,
   ValidationError,
   Workload
-} from './types';
+} from './types.js';
 
 const stressWeight = {
   low: 0,

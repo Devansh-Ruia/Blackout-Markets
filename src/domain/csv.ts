@@ -1,5 +1,5 @@
 import { parse } from 'csv-parse/sync';
-import type { GridStress, ParseResult, Priority, Region, ValidationError, Workload } from './types';
+import type { GridStress, ParseResult, Priority, Region, ValidationError, Workload } from './types.js';
 
 const workloadHeaders = [
   'id',

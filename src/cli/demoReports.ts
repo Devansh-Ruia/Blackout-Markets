@@ -1,7 +1,7 @@
 import { existsSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { runReportCli } from './report';
+import { runReportCli } from './report.js';
 
 interface Logger {
   log: (message: string) => void;

@@ -1,4 +1,4 @@
-import type { Policy, ValidationError } from './types';
+import type { Policy, ValidationError } from './types.js';
 
 export const defaultPolicy: Policy = {
   max_delay_minutes: 60,

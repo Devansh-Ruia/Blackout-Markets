@@ -9,7 +9,7 @@ import type {
   RetrospectiveReport,
   SavingsRange,
   WorkloadReportRow
-} from './types';
+} from './types.js';
 
 function round(value: number, places = 2) {
   const factor = 10 ** places;

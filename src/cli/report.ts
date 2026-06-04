@@ -1,11 +1,11 @@
 import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseRegionCsv, parseWorkloadCsv } from '../domain/csv';
-import { readPolicy } from '../domain/policy';
-import { buildRetrospectiveReport, diagnosticReportToMarkdown, workloadReportRowsToCsv } from '../domain/report';
-import type { Assumptions, ValidationError } from '../domain/types';
-import { validateDataset } from '../domain/validation';
+import { parseRegionCsv, parseWorkloadCsv } from '../domain/csv.js';
+import { readPolicy } from '../domain/policy.js';
+import { buildRetrospectiveReport, diagnosticReportToMarkdown, workloadReportRowsToCsv } from '../domain/report.js';
+import type { Assumptions, ValidationError } from '../domain/types.js';
+import { validateDataset } from '../domain/validation.js';
 
 interface Logger {
   log: (message: string) => void;

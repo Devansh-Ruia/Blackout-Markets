@@ -4,17 +4,17 @@ import multer from 'multer';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseRegionCsv, parseWorkloadCsv } from '../domain/csv';
-import { invalidInputRecommendation, optimize } from '../domain/optimizer';
-import { defaultPolicy, readPolicy } from '../domain/policy';
+import { parseRegionCsv, parseWorkloadCsv } from '../domain/csv.js';
+import { invalidInputRecommendation, optimize } from '../domain/optimizer.js';
+import { defaultPolicy, readPolicy } from '../domain/policy.js';
 import {
   buildRetrospectiveReport,
   diagnosticReportToMarkdown,
   recommendationsToCsv,
   workloadReportRowsToCsv
-} from '../domain/report';
-import type { Assumptions, OptimizationReport, RetrospectiveReport, ValidationError } from '../domain/types';
-import { validateDataset } from '../domain/validation';
+} from '../domain/report.js';
+import type { Assumptions, OptimizationReport, RetrospectiveReport, ValidationError } from '../domain/types.js';
+import { validateDataset } from '../domain/validation.js';
 
 function getFile(files: Express.Multer.File[] | { [fieldname: string]: Express.Multer.File[] } | undefined, field: string) {
   if (!files || Array.isArray(files)) return undefined;

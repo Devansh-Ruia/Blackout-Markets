@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { validateDataset, validatePolicy } from './validation';
-import type { Policy, Region, Workload } from './types';
+import { validateDataset, validatePolicy } from './validation.js';
+import type { Policy, Region, Workload } from './types.js';
 
 const policy: Policy = {
   max_delay_minutes: 60,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseRegionCsv, parseWorkloadCsv } from './csv';
+import { parseRegionCsv, parseWorkloadCsv } from './csv.js';
 
 describe('CSV parsing and validation', () => {
   it('returns row-level errors for malformed workload CSV values', () => {

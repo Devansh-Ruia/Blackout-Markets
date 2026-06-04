@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { parseRegionCsv, parseWorkloadCsv } from './csv';
-import { readPolicy } from './policy';
-import { validateDataset } from './validation';
+import { parseRegionCsv, parseWorkloadCsv } from './csv.js';
+import { readPolicy } from './policy.js';
+import { validateDataset } from './validation.js';
 
 function read(path: string) {
   return readFileSync(path, 'utf8');

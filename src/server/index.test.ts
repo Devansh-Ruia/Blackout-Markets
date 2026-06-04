@@ -3,7 +3,7 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { createApp } from './index';
+import { createApp } from './index.js';
 
 let servers: Server[] = [];
 

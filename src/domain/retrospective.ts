@@ -13,14 +13,14 @@ import type {
   SavingsBreakdownRow,
   Workload,
   WorkloadReportRow
-} from './types';
+} from './types.js';
 import {
   assessDataQuality,
   buildDiagnosticReport,
   buildSavingsRange,
   notCountedSavings,
   recommendPilot
-} from './diagnostic';
+} from './diagnostic.js';
 
 const defaultPue = 1.2;
 

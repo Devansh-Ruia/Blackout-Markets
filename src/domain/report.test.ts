@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { buildRetrospectiveReport, workloadReportRowsToCsv } from './report';
-import type { Assumptions, Policy, Region, Workload } from './types';
+import { buildRetrospectiveReport, workloadReportRowsToCsv } from './report.js';
+import type { Assumptions, Policy, Region, Workload } from './types.js';
 
 const assumptions: Assumptions = {
   gpu_kwh_assumption: 1,

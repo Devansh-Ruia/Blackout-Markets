@@ -1,4 +1,4 @@
-import type { Policy, Region, ValidationError, Workload } from './types';
+import type { Policy, Region, ValidationError, Workload } from './types.js';
 
 export function validatePolicy(policy: Policy, regions: Region[] = []): ValidationError[] {
   const errors: ValidationError[] = [];

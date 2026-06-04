@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { optimize } from './optimizer';
-import type { Assumptions, Policy, Region, Workload } from './types';
+import { optimize } from './optimizer.js';
+import type { Assumptions, Policy, Region, Workload } from './types.js';
 
 const assumptions: Assumptions = {
   gpu_kwh_assumption: 0.7,

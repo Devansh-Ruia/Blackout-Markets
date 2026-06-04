@@ -1,11 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { parseRegionCsv, parseWorkloadCsv } from './csv';
-import { defaultPolicy, readPolicy } from './policy';
-import { buildRetrospectiveReport } from './report';
-import type { Assumptions, RecommendationType } from './types';
-import { validateDataset } from './validation';
+import { parseRegionCsv, parseWorkloadCsv } from './csv.js';
+import { defaultPolicy, readPolicy } from './policy.js';
+import { buildRetrospectiveReport } from './report.js';
+import type { Assumptions, RecommendationType } from './types.js';
+import { validateDataset } from './validation.js';
 
 const assumptions: Assumptions = {
   gpu_kwh_assumption: 0.7,

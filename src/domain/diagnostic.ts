@@ -159,8 +159,11 @@ export function assessDataQuality(input: BuildRetrospectiveReportInput): DataQua
   }
 
   if (input.policy.allowed_regions.length === 0) {
-    score -= 3;
-    warnings.push('Allowed regions policy is empty, so every uploaded region is initially eligible.');
+    // Advisory only -- blank allowed_regions is the recommended default, not a data gap, so it
+    // carries no score penalty.
+    warnings.push(
+      'Allowed regions left blank (recommended default): every uploaded region is eligible unless another rule blocks it. This is intentional and safe, not a data problem.'
+    );
   }
 
   if (input.policy.blocked_regions.length === 0) {

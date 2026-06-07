@@ -268,7 +268,19 @@ function BreakdownTable({ title, rows }: { title: string; rows: SavingsBreakdown
   );
 }
 
+const POLICY_REASON_CODES = ['region_policy', 'carbon_ceiling', 'latency', 'data_residency'];
+
 function Blockers({ report }: { report: RetrospectiveReport }) {
+  // policy_violation_count from the engine flags every row whose analysis touched a policy
+  // constraint on ANY candidate region -- including rows that ultimately moved -- so it reads as
+  // "14 blocked" next to "8 moved". For display we count only rows whose FINAL recommendation was a
+  // prevented (non-moving) outcome where a policy reason applied.
+  const policyBlockedCount = report.rows.filter(
+    (row) =>
+      (row.recommendation_type === 'pinned' || row.recommendation_type === 'manual_review') &&
+      row.blocked_reasons.some((reason) => POLICY_REASON_CODES.includes(reason))
+  ).length;
+
   return (
     <section className="panel">
       <div className="section-title">
@@ -276,7 +288,7 @@ function Blockers({ report }: { report: RetrospectiveReport }) {
         <span>Workloads that could not safely move</span>
       </div>
       <div className="blocker-grid">
-        <MetricCard label="Blocked by policy" value={report.summary.policy_violation_count} />
+        <MetricCard label="Blocked by policy" value={policyBlockedCount} />
         <MetricCard label="capacity blocked" value={report.summary.capacity_blocked_count} />
         <MetricCard label="latency blocked" value={report.summary.latency_blocked_count} />
         <MetricCard label="data residency blocked" value={report.summary.data_residency_blocked_count} />
